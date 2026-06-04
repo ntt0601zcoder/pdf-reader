@@ -1,0 +1,14 @@
+{
+  // Static-assets deployment for Cloudflare Workers.
+  // The app is a static single-page app: `npm run build` emits ./dist, and
+  // `wrangler deploy` uploads it as Worker static assets. Providing this config
+  // makes wrangler deploy the assets directly instead of going through the Vite
+  // framework integration (which would require Vite >= 6).
+  "name": "pdf-reader",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./dist",
+    // Serve index.html for unmatched routes (SPA-style routing / deep links).
+    "not_found_handling": "single-page-application"
+  }
+}
