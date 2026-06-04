@@ -59,13 +59,16 @@ export function captureSelection(pageEl: HTMLElement): CapturedSelection | null 
 
   if (!rects.length) return null
 
+  // Keep the floating toolbar within the page so it doesn't clip off-screen
+  // (matters on narrow/mobile widths).
+  const half = Math.min(120, W / 2)
+  const rawLeft = (minLeft + maxRight) / 2 - pageRect.left
+  const left = Math.min(Math.max(rawLeft, half), W - half)
+
   return {
     text,
     rects: mergeRects(rects),
-    anchor: {
-      left: (minLeft + maxRight) / 2 - pageRect.left,
-      top: minTop - pageRect.top,
-    },
+    anchor: { left, top: minTop - pageRect.top },
   }
 }
 
