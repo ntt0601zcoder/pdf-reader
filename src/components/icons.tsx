@@ -100,6 +100,9 @@ export const IconBrightness = (p: P) => (
 export const IconBookmark = (p: P) => (
   <svg {...base(p)}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" /></svg>
 )
+export const IconRuler = (p: P) => (
+  <svg {...base(p)}><rect x="3" y="8" width="18" height="8" rx="1" /><path d="M7 8v3M11 8v4M15 8v3M19 8v4" /></svg>
+)
 export const IconBookmarkFilled = (p: P) => (
   <svg {...base(p)} fill="currentColor"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" /></svg>
 )

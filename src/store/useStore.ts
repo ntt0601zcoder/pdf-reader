@@ -38,6 +38,8 @@ interface ReaderState {
   layout: PageLayout
   /** Night-reading dim: opacity (0..0.7) of a black overlay over the reader. */
   dimLevel: number
+  /** Reading-ruler focus band (dims everything but the line under the pointer). */
+  rulerOn: boolean
   setTheme: (t: ThemeName) => void
   setLang: (l: Lang) => void
   toggleLang: () => void
@@ -46,6 +48,8 @@ interface ReaderState {
   /** Cycle vertical → horizontal → dual → vertical. */
   cycleLayout: () => void
   setDimLevel: (n: number) => void
+  setRulerOn: (v: boolean) => void
+  toggleRuler: () => void
 
   // --- auth ---------------------------------------------------------------
   accessToken: string | null
@@ -136,6 +140,7 @@ export const useStore = create<ReaderState>()(
       defaultColor: 'yellow',
       layout: 'vertical',
       dimLevel: 0,
+      rulerOn: false,
       setTheme: (theme) => set({ theme }),
       setLang: (lang) => set({ lang }),
       toggleLang: () => set({ lang: get().lang === 'vi' ? 'en' : 'vi' }),
@@ -151,6 +156,8 @@ export const useStore = create<ReaderState>()(
                 : 'vertical',
         })),
       setDimLevel: (n) => set({ dimLevel: clamp(n, 0, 0.7) }),
+      setRulerOn: (rulerOn) => set({ rulerOn }),
+      toggleRuler: () => set({ rulerOn: !get().rulerOn }),
 
       // auth
       accessToken: null,
@@ -286,6 +293,7 @@ export const useStore = create<ReaderState>()(
         defaultColor: s.defaultColor,
         layout: s.layout,
         dimLevel: s.dimLevel,
+        rulerOn: s.rulerOn,
       }),
     },
   ),
