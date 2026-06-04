@@ -9,6 +9,7 @@ import { buildOutline } from '../../lib/pdf/outline'
 import { buildSearchIndex, rectsForMatch } from '../../lib/pdf/search'
 import { PdfContext } from './pdfContext'
 import { PdfPage } from './PdfPage'
+import { ReadingRuler } from './ReadingRuler'
 
 void pdfjs // ensure the worker module is retained
 
@@ -292,6 +293,7 @@ export function PdfViewer() {
         }
       }}
     >
+      <ReadingRuler viewerRef={viewerRef} />
       <PdfContext.Provider value={ctx}>
         <Document
           file={file}

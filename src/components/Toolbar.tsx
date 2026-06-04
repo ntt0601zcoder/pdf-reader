@@ -21,6 +21,7 @@ import {
   IconMore,
   IconNote,
   IconPalette,
+  IconRuler,
   IconSearch,
   IconZoomIn,
   IconZoomOut,
@@ -42,6 +43,8 @@ export function Toolbar() {
   const setLayout = useStore((s) => s.setLayout)
   const dimLevel = useStore((s) => s.dimLevel)
   const setDimLevel = useStore((s) => s.setDimLevel)
+  const rulerOn = useStore((s) => s.rulerOn)
+  const toggleRuler = useStore((s) => s.toggleRuler)
 
   const setScale = useStore((s) => s.setScale)
   const zoomIn = useStore((s) => s.zoomIn)
@@ -253,6 +256,14 @@ export function Toolbar() {
                 <IconLayoutDual />
               </button>
             </div>
+            <button
+              className={`icon-btn${rulerOn ? ' is-active' : ''}`}
+              title={m.readingRuler}
+              aria-pressed={rulerOn}
+              onClick={toggleRuler}
+            >
+              <IconRuler />
+            </button>
           </div>
 
           <div className="toolbar__spacer" />
@@ -394,6 +405,17 @@ export function Toolbar() {
                     <IconLayoutHorizontal width={16} height={16} />
                     {m.layout}: {m.layoutHorizontal}
                     {pageLayout === 'horizontal' ? ' ✓' : ''}
+                  </button>
+                  <button
+                    className={`menu__item${rulerOn ? ' is-active' : ''}`}
+                    onClick={() => {
+                      toggleRuler()
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <IconRuler width={16} height={16} />
+                    {m.readingRuler}
+                    {rulerOn ? ' ✓' : ''}
                   </button>
 
                   <div className="menu__sep" />

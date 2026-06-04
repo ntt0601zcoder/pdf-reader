@@ -387,6 +387,62 @@ textarea {
   outline: 1px solid rgba(255, 120, 0, 0.9);
 }
 
+/* --- Reading ruler -------------------------------------------------------- */
+:root {
+  --ruler-band-h: 34px;
+  --ruler-dim: rgba(0, 0, 0, 0.42);
+}
+/* Sticky child of the scroll container: pinned to the viewer's visible top, so
+   it follows the screen (not the scrolled content). height:0 adds no scroll
+   height; the bars are absolutely placed off it. z-index:6 is above the page
+   layers (<=5 inside each .pdf-page) and below the selection toolbar/menus.
+   Plain alpha black (normal blend) so editor-dark theme page blends are safe. */
+.reading-ruler {
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 0;
+  z-index: 6;
+  pointer-events: none;
+  --ruler-y: -9999px;
+  transition: opacity 0.12s ease;
+}
+.reading-ruler[data-active='false'] {
+  opacity: 0;
+}
+.reading-ruler[data-active='true'] {
+  opacity: 1;
+}
+.reading-ruler__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--ruler-dim);
+}
+.reading-ruler__bar--top {
+  top: 0;
+  height: calc(var(--ruler-y) - var(--ruler-band-h) / 2);
+}
+.reading-ruler__bar--bottom {
+  top: calc(var(--ruler-y) + var(--ruler-band-h) / 2);
+  height: 100vh; /* clipped by .viewer overflow; generous lower bound */
+}
+.reading-ruler__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--ruler-y) - var(--ruler-band-h) / 2);
+  height: var(--ruler-band-h);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+}
+@media (max-width: 760px) {
+  :root {
+    --ruler-band-h: 44px;
+  }
+}
+
 /* --- Selection toolbar (floating) ---------------------------------------- */
 .selection-toolbar {
   position: absolute;
