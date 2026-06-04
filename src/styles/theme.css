@@ -1,0 +1,95 @@
+/* =============================================================================
+   Theme tokens. Driven by [data-theme] on <html> (set by the no-flash inline
+   script in index.html and kept in sync by useTheme()).
+   --page-filter is applied ONLY to the pdf.js <canvas> so the text layer and
+   highlight overlays (which sit above it) are never inverted.
+   ============================================================================= */
+
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f1f3f5;
+  --bg-elevated: #ffffff;
+  --fg: #1a1d21;
+  --fg-muted: #5c6670;
+  --toolbar-bg: #ffffff;
+  --sidebar-bg: #fafbfc;
+  --border: #e2e6ea;
+  --accent: #2f6fed;
+  --accent-fg: #ffffff;
+  --hover: rgba(0, 0, 0, 0.06);
+  --active: rgba(47, 111, 237, 0.12);
+  --page-bg: #ffffff;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.12), 0 2px 18px rgba(0, 0, 0, 0.08);
+
+  --page-filter: none;
+  --page-blend: normal;
+  /* Highlight overlay blending — multiply gives a marker look over white paper. */
+  --hl-blend: multiply;
+  --hl-opacity: 0.42;
+}
+
+:root[data-theme='sepia'] {
+  color-scheme: light;
+
+  --bg: #e4d8bd;
+  --bg-elevated: #f3ecd9;
+  --fg: #4a3b2a;
+  --fg-muted: #7d6c54;
+  --toolbar-bg: #f1e9d6;
+  --sidebar-bg: #efe6d0;
+  --border: #d8c9a8;
+  --accent: #a8743a;
+  --accent-fg: #ffffff;
+  --hover: rgba(90, 70, 54, 0.08);
+  --active: rgba(168, 116, 58, 0.16);
+  --page-bg: #f4ecd8;
+  --canvas-shadow: 0 1px 4px rgba(90, 70, 40, 0.18), 0 2px 18px rgba(90, 70, 40, 0.1);
+
+  --page-filter: sepia(0.35) brightness(0.96) contrast(0.95) saturate(1.1);
+  --page-blend: normal;
+  --hl-blend: multiply;
+  --hl-opacity: 0.4;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #14171a;
+  --bg-elevated: #1e2227;
+  --fg: #e6e9ec;
+  --fg-muted: #9aa4ad;
+  --toolbar-bg: #1b1f24;
+  --sidebar-bg: #15181c;
+  --border: #2b3138;
+  --accent: #4b8bff;
+  --accent-fg: #0b0e11;
+  --hover: rgba(255, 255, 255, 0.07);
+  --active: rgba(75, 139, 255, 0.18);
+  --page-bg: #1e2227;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 22px rgba(0, 0, 0, 0.45);
+
+  /* Lector community-standard tuning: softer than pure invert, keeps edges. */
+  --page-filter: invert(0.94) hue-rotate(180deg) brightness(0.8) contrast(2.28);
+  --page-blend: normal;
+  /* On an inverted (dark) page, 'lighten' makes highlights glow instead of
+     turning muddy the way 'multiply' would. */
+  --hl-blend: lighten;
+  --hl-opacity: 0.32;
+}
+
+/* --- Highlight colors (same hues across themes) --------------------------- */
+:root {
+  --hl-yellow: #ffd400;
+  --hl-green: #54d167;
+  --hl-blue: #4cc3ff;
+  --hl-pink: #ff79c0;
+  --hl-orange: #ff9f43;
+}
+
+/* The rendered PDF bitmap — the only element the theme filter touches. */
+.react-pdf__Page__canvas {
+  filter: var(--page-filter);
+  mix-blend-mode: var(--page-blend);
+}

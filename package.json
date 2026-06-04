@@ -1,0 +1,29 @@
+{
+  "name": "drive-pdf-reader",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A React + Vite PDF reader that opens PDFs from Google Drive (or local), with multi-theme reading (light/sepia/dark), multi-color highlights, notes, full-text search and outline. Annotations sync back to Google Drive as sidecar files.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "idb": "^8.0.0",
+    "pdfjs-dist": "5.4.296",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-pdf": "^10.4.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

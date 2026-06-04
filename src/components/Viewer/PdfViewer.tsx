@@ -1,0 +1,217 @@
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Document } from 'react-pdf'
+import type { PDFDocumentProxy } from 'pdfjs-dist'
+import { pdfjs } from '../../lib/pdf/worker' // side-effect: configures worker + CSS
+import { useStore } from '../../store/useStore'
+import { useMessages } from '../../hooks/useMessages'
+import { buildOutline } from '../../lib/pdf/outline'
+import { buildSearchIndex, rectsForMatch } from '../../lib/pdf/search'
+import { PdfContext } from './pdfContext'
+import { PdfPage } from './PdfPage'
+
+void pdfjs // ensure the worker module is retained
+
+export function PdfViewer() {
+  const m = useMessages()
+  const pdfData = useStore((s) => s.pdfData)
+  const numPages = useStore((s) => s.numPages)
+  const setNumPages = useStore((s) => s.setNumPages)
+  const setOutline = useStore((s) => s.setOutline)
+  const setDocError = useStore((s) => s.setDocError)
+  const setCurrentPage = useStore((s) => s.setCurrentPage)
+  const setSearching = useStore((s) => s.setSearching)
+  const setPendingSelection = useStore((s) => s.setPendingSelection)
+  const panel = useStore((s) => s.panel)
+  const pendingScroll = useStore((s) => s.pendingScroll)
+  const clearPendingScroll = useStore((s) => s.clearPendingScroll)
+  const searchActiveIndex = useStore((s) => s.searchActiveIndex)
+  const searchIndex = useStore((s) => s.searchIndex)
+  const setSearchIndex = useStore((s) => s.setSearchIndex)
+  const scale = useStore((s) => s.scale)
+
+  const viewerRef = useRef<HTMLDivElement>(null)
+  const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null)
+  const [base, setBase] = useState({ w: 612, h: 792 })
+
+  // Scroll anchor (top-most visible page + fraction into it) so zoom doesn't
+  // jump the view: page heights change with scale, so we re-pin after re-layout.
+  const anchorRef = useRef<{ page: number; fraction: number }>({ page: 1, fraction: 0 })
+  const prevScaleRef = useRef(scale)
+  const rafRef = useRef(0)
+
+  function updateAnchor() {
+    const root = viewerRef.current
+    if (!root) return
+    const page = useStore.getState().currentPage
+    const el = document.getElementById(`pdf-page-${page}`)
+    if (!el || el.offsetHeight === 0) return
+    anchorRef.current = {
+      page,
+      fraction: Math.min(1, Math.max(0, (root.scrollTop - el.offsetTop) / el.offsetHeight)),
+    }
+  }
+
+  // Re-pin the anchor after a scale change re-lays out the pages.
+  useLayoutEffect(() => {
+    const prev = prevScaleRef.current
+    prevScaleRef.current = scale
+    if (prev === scale) return // initial mount — nothing to restore
+    const root = viewerRef.current
+    if (!root) return
+    const { page, fraction } = anchorRef.current
+    const el = document.getElementById(`pdf-page-${page}`)
+    if (el) {
+      root.scrollTo({ top: el.offsetTop + fraction * el.offsetHeight, behavior: 'instant' as ScrollBehavior })
+    }
+  }, [scale])
+
+  // react-pdf reloads when `file` identity changes — memoize on the bytes.
+  const file = useMemo(() => (pdfData ? { data: pdfData } : null), [pdfData])
+
+  // Reset the document proxy when a new document loads (store resets the rest).
+  useEffect(() => {
+    setPdf(null)
+  }, [pdfData])
+
+  async function onLoadSuccess(doc: PDFDocumentProxy) {
+    setPdf(doc)
+    setNumPages(doc.numPages)
+    // Restore the last-read page now that the page elements will exist. The
+    // pendingScroll set during openDoc fired before any page was mounted, so we
+    // re-request it here once numPages is known.
+    const target = useStore.getState().currentPage
+    if (target > 1 && target <= doc.numPages) {
+      useStore.getState().requestScroll(target)
+    }
+    try {
+      const p1 = await doc.getPage(1)
+      const vp = p1.getViewport({ scale: 1, rotation: p1.rotate })
+      setBase({ w: vp.width, h: vp.height })
+    } catch {
+      /* keep defaults */
+    }
+    buildOutline(doc).then(setOutline).catch(() => setOutline([]))
+  }
+
+  // Build the (heavy) full-text index lazily, the first time Search opens.
+  useEffect(() => {
+    if (panel !== 'search' || !pdf || searchIndex.length > 0) return
+    let cancelled = false
+    setSearching(true)
+    buildSearchIndex(pdf)
+      .then((idx) => {
+        if (!cancelled) setSearchIndex(idx)
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [panel, pdf, searchIndex.length, setSearching])
+
+  // Track the current page via a single IntersectionObserver over all pages.
+  useEffect(() => {
+    const root = viewerRef.current
+    if (!root || numPages === 0) return
+    const visible = new Set<number>()
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const n = Number((e.target as HTMLElement).dataset.page)
+          if (e.isIntersecting) visible.add(n)
+          else visible.delete(n)
+        }
+        if (visible.size) setCurrentPage(Math.min(...visible))
+      },
+      { root, threshold: 0.01 },
+    )
+    const els = root.querySelectorAll<HTMLElement>('.pdf-page')
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [numPages, setCurrentPage])
+
+  // Honor scroll requests (page nav, outline, search, highlight jump).
+  useEffect(() => {
+    if (!pendingScroll) return
+    const root = viewerRef.current
+    const el = document.getElementById(`pdf-page-${pendingScroll.page}`)
+    if (root && el) {
+      root.scrollTo({ top: el.offsetTop + (pendingScroll.y ?? 0) - 60, behavior: 'smooth' })
+    }
+    clearPendingScroll()
+  }, [pendingScroll, clearPendingScroll])
+
+  // Scroll the active search match into view.
+  useEffect(() => {
+    const { searchMatches, searchQuery, requestScroll } = useStore.getState()
+    if (searchActiveIndex < 0 || !pdf) return
+    const match = searchMatches[searchActiveIndex]
+    if (!match) return
+    ;(async () => {
+      const el = document.getElementById(`pdf-page-${match.page}`)
+      let y = 0
+      try {
+        const rects = await rectsForMatch(pdf, searchIndex, match, searchQuery.trim().length)
+        if (rects[0] && el) y = rects[0].y * el.clientHeight
+      } catch {
+        /* fall back to page top */
+      }
+      requestScroll(match.page, Math.max(0, y - 80))
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchActiveIndex, pdf, searchIndex])
+
+  const ctx = useMemo(
+    () => ({ pdf, baseWidth: base.w, baseHeight: base.h }),
+    [pdf, base.w, base.h],
+  )
+
+  if (!file) return null
+
+  return (
+    <div
+      className="viewer"
+      ref={viewerRef}
+      onScroll={() => {
+        if (rafRef.current) return
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = 0
+          updateAnchor()
+        })
+      }}
+      onMouseDown={(e) => {
+        // Clicking the background dismisses an open selection toolbar.
+        if (!(e.target as HTMLElement).closest('.selection-toolbar')) {
+          setPendingSelection(null)
+        }
+      }}
+    >
+      <PdfContext.Provider value={ctx}>
+        <Document
+          file={file}
+          onLoadSuccess={onLoadSuccess}
+          onLoadError={(e) => setDocError(e?.message || 'errLoadPdf')}
+          loading={<CenterSpinner label={m.loadingPdf} />}
+          error={<div className="center-state">{m.errLoadPdf}</div>}
+          noData={<span />}
+        >
+          <div className="viewer__pages">
+            {Array.from({ length: numPages }, (_, i) => (
+              <PdfPage key={i + 1} pageNumber={i + 1} />
+            ))}
+          </div>
+        </Document>
+      </PdfContext.Provider>
+    </div>
+  )
+}
+
+function CenterSpinner({ label }: { label: string }) {
+  return (
+    <div className="center-state">
+      <div className="spinner" />
+      <span>{label}</span>
+    </div>
+  )
+}
