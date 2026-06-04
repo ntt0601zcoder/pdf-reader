@@ -2,7 +2,41 @@
 // Domain types — the shared contract used across store, storage and UI.
 // =============================================================================
 
-export type ThemeName = 'light' | 'sepia' | 'dark'
+export type ThemeName =
+  | 'light'
+  | 'gray'
+  | 'sepia'
+  | 'solarized-light'
+  | 'dark'
+  | 'dim'
+  | 'night'
+  | 'black'
+  | 'contrast'
+  | 'one-dark'
+  | 'dracula'
+  | 'nord'
+  | 'gruvbox'
+  | 'monokai'
+  | 'solarized-dark'
+
+/** All theme keys (used to validate the persisted/initial theme). */
+export const THEMES: ThemeName[] = [
+  'light',
+  'gray',
+  'sepia',
+  'solarized-light',
+  'dark',
+  'dim',
+  'night',
+  'black',
+  'contrast',
+  'one-dark',
+  'dracula',
+  'nord',
+  'gruvbox',
+  'monokai',
+  'solarized-dark',
+]
 export type Lang = 'vi' | 'en'
 
 /** Where the currently open PDF came from. */

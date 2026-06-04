@@ -13,7 +13,8 @@
           var t = null
           var raw = localStorage.getItem('drive-pdf-reader/settings')
           if (raw) t = (JSON.parse(raw).state || {}).theme || null
-          if (!t || ['light', 'sepia', 'dark'].indexOf(t) === -1) {
+          var valid = ['light','gray','sepia','solarized-light','dark','dim','night','black','contrast','one-dark','dracula','nord','gruvbox','monokai','solarized-dark']
+          if (!t || valid.indexOf(t) === -1) {
             t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
           }
           document.documentElement.setAttribute('data-theme', t)
