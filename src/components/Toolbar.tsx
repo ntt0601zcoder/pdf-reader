@@ -13,6 +13,7 @@ import {
   IconChevronRight,
   IconFitWidth,
   IconGlobe,
+  IconLayoutDual,
   IconLayoutHorizontal,
   IconLayoutVertical,
   IconList,
@@ -37,8 +38,7 @@ export function Toolbar() {
   const isBookmarked = useStore((s) => s.bookmarks.some((b) => b.page === s.currentPage))
   const toggleBookmark = useStore((s) => s.toggleBookmark)
   const pageLayout = useStore((s) => s.layout)
-  const toggleLayout = useStore((s) => s.toggleLayout)
-  const layoutLabel = pageLayout === 'vertical' ? m.layoutVertical : m.layoutHorizontal
+  const setLayout = useStore((s) => s.setLayout)
 
   const setScale = useStore((s) => s.setScale)
   const zoomIn = useStore((s) => s.zoomIn)
@@ -203,13 +203,32 @@ export function Toolbar() {
             <button className="icon-btn" title={m.fitWidth} onClick={fitWidth}>
               <IconFitWidth />
             </button>
-            <button
-              className="icon-btn"
-              title={`${m.layout}: ${layoutLabel}`}
-              onClick={toggleLayout}
-            >
-              {pageLayout === 'vertical' ? <IconLayoutVertical /> : <IconLayoutHorizontal />}
-            </button>
+            <div className="toolbar__seg" role="group" aria-label={m.layout}>
+              <button
+                className={`icon-btn${pageLayout === 'vertical' ? ' is-active' : ''}`}
+                title={`${m.layout}: ${m.layoutVertical}`}
+                aria-pressed={pageLayout === 'vertical'}
+                onClick={() => setLayout('vertical')}
+              >
+                <IconLayoutVertical />
+              </button>
+              <button
+                className={`icon-btn${pageLayout === 'horizontal' ? ' is-active' : ''}`}
+                title={`${m.layout}: ${m.layoutHorizontal}`}
+                aria-pressed={pageLayout === 'horizontal'}
+                onClick={() => setLayout('horizontal')}
+              >
+                <IconLayoutHorizontal />
+              </button>
+              <button
+                className={`icon-btn${pageLayout === 'dual' ? ' is-active' : ''}`}
+                title={`${m.layout}: ${m.layoutDual}`}
+                aria-pressed={pageLayout === 'dual'}
+                onClick={() => setLayout('dual')}
+              >
+                <IconLayoutDual />
+              </button>
+            </div>
           </div>
 
           <div className="toolbar__spacer" />
@@ -329,16 +348,24 @@ export function Toolbar() {
                   <button
                     className="menu__item"
                     onClick={() => {
-                      toggleLayout()
+                      setLayout('vertical')
                       setMoreOpen(false)
                     }}
                   >
-                    {pageLayout === 'vertical' ? (
-                      <IconLayoutVertical width={16} height={16} />
-                    ) : (
-                      <IconLayoutHorizontal width={16} height={16} />
-                    )}
-                    {m.layout}: {layoutLabel}
+                    <IconLayoutVertical width={16} height={16} />
+                    {m.layout}: {m.layoutVertical}
+                    {pageLayout === 'vertical' ? ' ✓' : ''}
+                  </button>
+                  <button
+                    className="menu__item"
+                    onClick={() => {
+                      setLayout('horizontal')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <IconLayoutHorizontal width={16} height={16} />
+                    {m.layout}: {m.layoutHorizontal}
+                    {pageLayout === 'horizontal' ? ' ✓' : ''}
                   </button>
 
                   <div className="menu__sep" />

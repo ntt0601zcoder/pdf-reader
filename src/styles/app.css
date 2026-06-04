@@ -64,6 +64,13 @@ textarea {
   gap: 4px;
 }
 
+/* Tight segmented control (e.g. the 3-way page-layout switch). */
+.toolbar__seg {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .toolbar__spacer {
   flex: 1;
 }
@@ -261,6 +268,18 @@ textarea {
 .viewer[data-layout='horizontal'] .pdf-page {
   scroll-snap-align: center;
   flex: 0 0 auto;
+}
+
+/* Dual (two-up book spread): vertical scroll, two pages per row. Pages keep
+   their explicit pixel size (set inline by PdfPage from natural*scale); two fit
+   per row only because entering dual halves `scale` (see PdfViewer). No
+   scroll-snap — dual is a continuous vertical scroll. */
+.viewer[data-layout='dual'] .viewer__pages {
+  flex-flow: row wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px 24px; /* row-gap between spreads, column-gap between the two pages */
+  padding: 20px 24px 40px;
 }
 
 .pdf-page {

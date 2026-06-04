@@ -58,6 +58,7 @@ export const MESSAGES = {
     layout: 'Bố cục',
     layoutVertical: 'Cuộn dọc',
     layoutHorizontal: 'Lướt ngang',
+    layoutDual: 'Sách (2 trang)',
     openAnother: 'Mở tệp khác',
     closeDoc: 'Đóng',
 
@@ -164,6 +165,7 @@ export const MESSAGES = {
     layout: 'Layout',
     layoutVertical: 'Vertical scroll',
     layoutHorizontal: 'Horizontal',
+    layoutDual: 'Two pages',
     openAnother: 'Open another file',
     closeDoc: 'Close',
 
