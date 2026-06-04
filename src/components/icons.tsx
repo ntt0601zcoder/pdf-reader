@@ -97,6 +97,12 @@ export const IconPlay = (p: P) => (
 export const IconPause = (p: P) => (
   <svg {...base(p)} fill="currentColor" stroke="none"><rect x="7" y="4" width="4" height="16" rx="1" /><rect x="13" y="4" width="4" height="16" rx="1" /></svg>
 )
+export const IconStop = (p: P) => (
+  <svg {...base(p)}><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" stroke="none" /></svg>
+)
+export const IconSpeaker = (p: P) => (
+  <svg {...base(p)}><path d="M4 9v6h4l5 4V5L8 9H4Z" /><path d="M16 8a4 4 0 0 1 0 8M18.5 5.5a8 8 0 0 1 0 13" /></svg>
+)
 export const IconMore = (p: P) => (
   <svg {...base(p)}><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none" /></svg>
 )

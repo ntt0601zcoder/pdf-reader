@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useStore, AUTOSCROLL_STEP } from '../store/useStore'
 import { useMessages } from '../hooks/useMessages'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import type { TtsApi } from '../hooks/useTextToSpeech'
 import { signOut } from '../lib/google/auth'
 import { flushNow } from '../lib/storage'
 import type { ThemeName } from '../types'
@@ -25,11 +26,13 @@ import {
   IconPlay,
   IconRuler,
   IconSearch,
+  IconSpeaker,
+  IconStop,
   IconZoomIn,
   IconZoomOut,
 } from './icons'
 
-export function Toolbar() {
+export function Toolbar({ tts }: { tts: TtsApi }) {
   const m = useMessages()
   const doc = useStore((s) => s.doc)
   const numPages = useStore((s) => s.numPages)
@@ -303,6 +306,36 @@ export function Toolbar() {
             )}
           </div>
 
+          <div className="toolbar__group">
+            <button
+              className={`icon-btn${tts.state !== 'idle' ? ' is-active' : ''}`}
+              title={
+                tts.state === 'playing'
+                  ? m.ttsPause
+                  : tts.state === 'paused'
+                    ? m.ttsResume
+                    : tts.supported
+                      ? m.readAloud
+                      : m.ttsNotSupported
+              }
+              disabled={!tts.supported || numPages === 0}
+              onClick={tts.toggle}
+            >
+              {tts.state === 'playing' ? (
+                <IconPause />
+              ) : tts.state === 'paused' ? (
+                <IconPlay />
+              ) : (
+                <IconSpeaker />
+              )}
+            </button>
+            {tts.state !== 'idle' && (
+              <button className="icon-btn" title={m.stopReading} onClick={tts.stop}>
+                <IconStop />
+              </button>
+            )}
+          </div>
+
           <div className="toolbar__spacer" />
           <SyncStatus />
 
@@ -384,6 +417,20 @@ export function Toolbar() {
       {narrow && (
         <>
           <div className="toolbar__spacer" />
+          {tts.state !== 'idle' && (
+            <>
+              <button
+                className="icon-btn"
+                title={tts.state === 'playing' ? m.ttsPause : m.ttsResume}
+                onClick={tts.toggle}
+              >
+                {tts.state === 'playing' ? <IconPause /> : <IconPlay />}
+              </button>
+              <button className="icon-btn" title={m.stopReading} onClick={tts.stop}>
+                <IconStop />
+              </button>
+            </>
+          )}
           <SyncStatus />
           <div className="menu">
             <button
@@ -485,6 +532,52 @@ export function Toolbar() {
                         </button>
                       </div>
                     </>
+                  )}
+
+                  <button
+                    className={`menu__item${tts.state !== 'idle' ? ' is-active' : ''}`}
+                    disabled={!tts.supported || numPages === 0}
+                    onClick={tts.toggle}
+                  >
+                    {tts.state === 'playing' ? (
+                      <IconPause width={16} height={16} />
+                    ) : tts.state === 'paused' ? (
+                      <IconPlay width={16} height={16} />
+                    ) : (
+                      <IconSpeaker width={16} height={16} />
+                    )}
+                    {tts.state === 'playing'
+                      ? m.ttsPause
+                      : tts.state === 'paused'
+                        ? m.ttsResume
+                        : m.readAloud}
+                  </button>
+                  {tts.state !== 'idle' && (
+                    <button
+                      className="menu__item"
+                      onClick={() => {
+                        tts.stop()
+                        setMoreOpen(false)
+                      }}
+                    >
+                      <IconStop width={16} height={16} />
+                      {m.stopReading}
+                    </button>
+                  )}
+                  {tts.supported && (
+                    <div className="menu__row">
+                      <span className="menu__group-label">{m.ttsRate}</span>
+                      <select
+                        value={tts.rate}
+                        onChange={(e) => tts.setRate(Number(e.target.value))}
+                      >
+                        {[0.75, 1, 1.25, 1.5, 1.75, 2].map((r) => (
+                          <option key={r} value={r}>
+                            {r}x
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   )}
 
                   <div className="menu__sep" />

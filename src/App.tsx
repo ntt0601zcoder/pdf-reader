@@ -1,5 +1,6 @@
 import { useTheme } from './hooks/useTheme'
 import { useMessages } from './hooks/useMessages'
+import { useTextToSpeech } from './hooks/useTextToSpeech'
 import { useStore } from './store/useStore'
 import { Toolbar } from './components/Toolbar'
 import { Welcome } from './components/Welcome'
@@ -14,12 +15,14 @@ export default function App() {
   const docLoading = useStore((s) => s.docLoading)
   const docError = useStore((s) => s.docError)
   const setDocError = useStore((s) => s.setDocError)
+  // Read-aloud engine lives here so the (sibling) toolbar can drive it.
+  const tts = useTextToSpeech()
 
   return (
     <div className="app">
       {doc ? (
         <>
-          <Toolbar />
+          <Toolbar tts={tts} />
           <div className="app__body">
             <PdfViewer />
             <Sidebar />
