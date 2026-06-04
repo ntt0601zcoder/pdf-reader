@@ -45,6 +45,17 @@ export function useAutoScroll(viewerRef: RefObject<HTMLDivElement | null>) {
     const onWheel = () => stop()
     const onTouch = () => stop()
     const onKey = (e: KeyboardEvent) => {
+      // Don't treat typing in a form field as document navigation.
+      const t = e.target as HTMLElement | null
+      if (
+        t &&
+        (t.tagName === 'INPUT' ||
+          t.tagName === 'TEXTAREA' ||
+          t.tagName === 'SELECT' ||
+          t.isContentEditable)
+      ) {
+        return
+      }
       if (['PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) {
         stop()
       }
