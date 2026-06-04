@@ -13,6 +13,8 @@ import {
   IconChevronRight,
   IconFitWidth,
   IconGlobe,
+  IconLayoutHorizontal,
+  IconLayoutVertical,
   IconList,
   IconMore,
   IconNote,
@@ -34,6 +36,9 @@ export function Toolbar() {
   const userEmail = useStore((s) => s.userEmail)
   const isBookmarked = useStore((s) => s.bookmarks.some((b) => b.page === s.currentPage))
   const toggleBookmark = useStore((s) => s.toggleBookmark)
+  const pageLayout = useStore((s) => s.layout)
+  const toggleLayout = useStore((s) => s.toggleLayout)
+  const layoutLabel = pageLayout === 'vertical' ? m.layoutVertical : m.layoutHorizontal
 
   const setScale = useStore((s) => s.setScale)
   const zoomIn = useStore((s) => s.zoomIn)
@@ -198,6 +203,13 @@ export function Toolbar() {
             <button className="icon-btn" title={m.fitWidth} onClick={fitWidth}>
               <IconFitWidth />
             </button>
+            <button
+              className="icon-btn"
+              title={`${m.layout}: ${layoutLabel}`}
+              onClick={toggleLayout}
+            >
+              {pageLayout === 'vertical' ? <IconLayoutVertical /> : <IconLayoutHorizontal />}
+            </button>
           </div>
 
           <div className="toolbar__spacer" />
@@ -313,6 +325,21 @@ export function Toolbar() {
                       {m.fitWidth}
                     </button>
                   </div>
+
+                  <button
+                    className="menu__item"
+                    onClick={() => {
+                      toggleLayout()
+                      setMoreOpen(false)
+                    }}
+                  >
+                    {pageLayout === 'vertical' ? (
+                      <IconLayoutVertical width={16} height={16} />
+                    ) : (
+                      <IconLayoutHorizontal width={16} height={16} />
+                    )}
+                    {m.layout}: {layoutLabel}
+                  </button>
 
                   <div className="menu__sep" />
 

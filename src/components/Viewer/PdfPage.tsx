@@ -27,6 +27,7 @@ export function PdfPage({ pageNumber }: Props) {
   const pendingSelPage = useStore((s) => s.pendingSelection?.page)
   const isBookmarked = useStore((s) => s.bookmarks.some((b) => b.page === pageNumber))
   const toggleBookmark = useStore((s) => s.toggleBookmark)
+  const layout = useStore((s) => s.layout)
   // NB: select the stable array, then derive — a selector that returns a fresh
   // array each call makes zustand v5 (useSyncExternalStore) loop infinitely.
   const annotations = useStore((s) => s.annotations)
@@ -59,11 +60,14 @@ export function PdfPage({ pageNumber }: Props) {
     if (!el) return
     const io = new IntersectionObserver(
       (entries) => setVisible(entries[0]?.isIntersecting ?? false),
-      { root: el.closest('.viewer'), rootMargin: '1400px 0px' },
+      {
+        root: el.closest('.viewer'),
+        rootMargin: layout === 'horizontal' ? '0px 1400px' : '1400px 0px',
+      },
     )
     io.observe(el)
     return () => io.disconnect()
-  }, [])
+  }, [layout])
 
   function onMouseUp(e: ReactMouseEvent) {
     const el = ref.current

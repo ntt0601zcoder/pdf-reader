@@ -248,6 +248,21 @@ textarea {
   min-width: min-content;
 }
 
+/* Horizontal (page-by-page swipe) layout: pages in a row that snap into place. */
+.viewer[data-layout='horizontal'] {
+  scroll-snap-type: x mandatory;
+}
+.viewer[data-layout='horizontal'] .viewer__pages {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 20px 24px 28px;
+}
+.viewer[data-layout='horizontal'] .pdf-page {
+  scroll-snap-align: center;
+  flex: 0 0 auto;
+}
+
 .pdf-page {
   position: relative;
   background: var(--page-bg);

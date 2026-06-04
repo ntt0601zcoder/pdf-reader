@@ -55,6 +55,9 @@ export const MESSAGES = {
     toggleBookmarks: 'Trang đã đánh dấu',
     bookmarkThisPage: 'Đánh dấu trang này',
     removeBookmark: 'Bỏ đánh dấu',
+    layout: 'Bố cục',
+    layoutVertical: 'Cuộn dọc',
+    layoutHorizontal: 'Lướt ngang',
     openAnother: 'Mở tệp khác',
     closeDoc: 'Đóng',
 
@@ -158,6 +161,9 @@ export const MESSAGES = {
     toggleBookmarks: 'Bookmarks',
     bookmarkThisPage: 'Bookmark this page',
     removeBookmark: 'Remove bookmark',
+    layout: 'Layout',
+    layoutVertical: 'Vertical scroll',
+    layoutHorizontal: 'Horizontal',
     openAnother: 'Open another file',
     closeDoc: 'Close',
 
