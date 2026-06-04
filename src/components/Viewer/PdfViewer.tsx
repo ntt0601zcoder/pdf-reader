@@ -29,6 +29,8 @@ export function PdfViewer() {
   const searchIndex = useStore((s) => s.searchIndex)
   const setSearchIndex = useStore((s) => s.setSearchIndex)
   const scale = useStore((s) => s.scale)
+  const layout = useStore((s) => s.layout)
+  const horizontal = layout === 'horizontal'
   const narrow = useMediaQuery('(max-width: 760px)')
 
   const viewerRef = useRef<HTMLDivElement>(null)
@@ -46,11 +48,15 @@ export function PdfViewer() {
     if (!root) return
     const page = useStore.getState().currentPage
     const el = document.getElementById(`pdf-page-${page}`)
-    if (!el || el.offsetHeight === 0) return
-    anchorRef.current = {
-      page,
-      fraction: Math.min(1, Math.max(0, (root.scrollTop - el.offsetTop) / el.offsetHeight)),
-    }
+    if (!el) return
+    const fraction = horizontal
+      ? el.offsetWidth > 0
+        ? (root.scrollLeft - el.offsetLeft) / el.offsetWidth
+        : 0
+      : el.offsetHeight > 0
+        ? (root.scrollTop - el.offsetTop) / el.offsetHeight
+        : 0
+    anchorRef.current = { page, fraction: Math.min(1, Math.max(0, fraction)) }
   }
 
   // Re-pin the anchor after a scale change re-lays out the pages.
@@ -62,10 +68,20 @@ export function PdfViewer() {
     if (!root) return
     const { page, fraction } = anchorRef.current
     const el = document.getElementById(`pdf-page-${page}`)
-    if (el) {
+    if (!el) return
+    if (horizontal) {
+      root.scrollTo({ left: el.offsetLeft + fraction * el.offsetWidth, behavior: 'instant' as ScrollBehavior })
+    } else {
       root.scrollTo({ top: el.offsetTop + fraction * el.offsetHeight, behavior: 'instant' as ScrollBehavior })
     }
-  }, [scale])
+  }, [scale, horizontal])
+
+  // When the layout flips, keep the current page in view.
+  useEffect(() => {
+    if (useStore.getState().numPages > 0) {
+      useStore.getState().requestScroll(useStore.getState().currentPage)
+    }
+  }, [horizontal])
 
   // react-pdf reloads when `file` identity changes — memoize on the bytes.
   const file = useMemo(() => (pdfData ? { data: pdfData } : null), [pdfData])
@@ -155,17 +171,27 @@ export function PdfViewer() {
   useEffect(() => {
     const root = viewerRef.current
     if (!root || numPages === 0) return
-    const visible = new Set<number>()
+    // Track how much of each page is visible; the "current" page is the most
+    // visible one (works for vertical scroll and horizontal/centered paging).
+    const ratios = new Map<number, number>()
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
           const n = Number((e.target as HTMLElement).dataset.page)
-          if (e.isIntersecting) visible.add(n)
-          else visible.delete(n)
+          if (e.isIntersecting && e.intersectionRatio > 0) ratios.set(n, e.intersectionRatio)
+          else ratios.delete(n)
         }
-        if (visible.size) setCurrentPage(Math.min(...visible))
+        let best = -1
+        let bestRatio = -1
+        for (const [n, r] of ratios) {
+          if (r > bestRatio || (r === bestRatio && (best === -1 || n < best))) {
+            best = n
+            bestRatio = r
+          }
+        }
+        if (best !== -1) setCurrentPage(best)
       },
-      { root, threshold: 0.01 },
+      { root, threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] },
     )
     const els = root.querySelectorAll<HTMLElement>('.pdf-page')
     els.forEach((el) => io.observe(el))
@@ -178,10 +204,18 @@ export function PdfViewer() {
     const root = viewerRef.current
     const el = document.getElementById(`pdf-page-${pendingScroll.page}`)
     if (root && el) {
-      root.scrollTo({ top: el.offsetTop + (pendingScroll.y ?? 0) - 60, behavior: 'smooth' })
+      if (horizontal) {
+        root.scrollTo({
+          left: Math.max(0, el.offsetLeft - 16),
+          top: pendingScroll.y ? Math.max(0, pendingScroll.y - 60) : 0,
+          behavior: 'smooth',
+        })
+      } else {
+        root.scrollTo({ top: el.offsetTop + (pendingScroll.y ?? 0) - 60, behavior: 'smooth' })
+      }
     }
     clearPendingScroll()
-  }, [pendingScroll, clearPendingScroll])
+  }, [pendingScroll, clearPendingScroll, horizontal])
 
   // Scroll the active search match into view.
   useEffect(() => {
@@ -213,6 +247,7 @@ export function PdfViewer() {
   return (
     <div
       className="viewer"
+      data-layout={layout}
       ref={viewerRef}
       onScroll={() => {
         if (rafRef.current) return

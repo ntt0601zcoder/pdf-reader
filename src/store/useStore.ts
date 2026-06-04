@@ -18,6 +18,8 @@ import { detectLang } from '../i18n'
 
 export type SyncStatus = 'idle' | 'saving' | 'saved' | 'local' | 'error'
 export type PanelKind = 'outline' | 'search' | 'notes' | 'bookmarks' | null
+/** Page layout: continuous vertical scroll, or horizontal page-by-page swipe. */
+export type PageLayout = 'vertical' | 'horizontal'
 
 /** A text selection awaiting a user action (highlight / note / copy). */
 export interface PendingSelection {
@@ -33,10 +35,12 @@ interface ReaderState {
   theme: ThemeName
   lang: Lang
   defaultColor: HighlightColor
+  layout: PageLayout
   setTheme: (t: ThemeName) => void
   setLang: (l: Lang) => void
   toggleLang: () => void
   setDefaultColor: (c: HighlightColor) => void
+  toggleLayout: () => void
 
   // --- auth ---------------------------------------------------------------
   accessToken: string | null
@@ -125,10 +129,13 @@ export const useStore = create<ReaderState>()(
       theme: initialTheme(),
       lang: detectLang(),
       defaultColor: 'yellow',
+      layout: 'vertical',
       setTheme: (theme) => set({ theme }),
       setLang: (lang) => set({ lang }),
       toggleLang: () => set({ lang: get().lang === 'vi' ? 'en' : 'vi' }),
       setDefaultColor: (defaultColor) => set({ defaultColor }),
+      toggleLayout: () =>
+        set({ layout: get().layout === 'vertical' ? 'horizontal' : 'vertical' }),
 
       // auth
       accessToken: null,
@@ -258,7 +265,12 @@ export const useStore = create<ReaderState>()(
       name: 'drive-pdf-reader/settings',
       storage: createJSONStorage(() => localStorage),
       // Only persist user preferences — never document data or tokens.
-      partialize: (s) => ({ theme: s.theme, lang: s.lang, defaultColor: s.defaultColor }),
+      partialize: (s) => ({
+        theme: s.theme,
+        lang: s.lang,
+        defaultColor: s.defaultColor,
+        layout: s.layout,
+      }),
     },
   ),
 )
