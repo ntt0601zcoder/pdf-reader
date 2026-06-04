@@ -122,10 +122,12 @@ export function PdfViewer() {
   // Reset the document proxy when a new document loads (store resets the rest).
   useEffect(() => {
     setPdf(null)
+    useStore.getState().setPdfDoc(null)
   }, [pdfData])
 
   async function onLoadSuccess(doc: PDFDocumentProxy) {
     setPdf(doc)
+    useStore.getState().setPdfDoc(doc) // exposes the proxy for read-aloud
     setNumPages(doc.numPages)
     // Restore the last-read page now that the page elements will exist. The
     // pendingScroll set during openDoc fired before any page was mounted, so we

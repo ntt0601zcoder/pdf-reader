@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import type { PDFDocumentProxy } from 'pdfjs-dist'
 import type {
   Annotation,
   Bookmark,
@@ -10,6 +11,7 @@ import type {
   OutlineNode,
   SearchMatch,
   ThemeName,
+  TtsState,
 } from '../types'
 import { THEMES } from '../types'
 import { newId } from '../lib/highlights'
@@ -89,6 +91,18 @@ interface ReaderState {
   setAutoScroll: (v: boolean) => void
   toggleAutoScroll: () => void
   setAutoScrollSpeed: (s: number) => void
+
+  // --- text-to-speech -----------------------------------------------------
+  /** Current PDF proxy, exposed in the store so the (sibling) toolbar can drive
+   *  read-aloud. Not persisted; reset on open/close. */
+  pdfDoc: PDFDocumentProxy | null
+  setPdfDoc: (p: PDFDocumentProxy | null) => void
+  ttsState: TtsState
+  ttsRate: number
+  ttsVoiceURI: string | null
+  setTtsState: (s: TtsState) => void
+  setTtsRate: (r: number) => void
+  setTtsVoiceURI: (uri: string | null) => void
 
   // --- annotations --------------------------------------------------------
   annotations: Annotation[]
@@ -203,6 +217,8 @@ export const useStore = create<ReaderState>()(
           searchIndex: [],
           currentPage: meta.lastPage ?? 1,
           pendingScroll: meta.lastPage && meta.lastPage > 1 ? { page: meta.lastPage } : null,
+          pdfDoc: null,
+          ttsState: 'idle',
         }),
       closeDoc: () =>
         set({
@@ -221,6 +237,8 @@ export const useStore = create<ReaderState>()(
           searchIndex: [],
           pendingSelection: null,
           autoScroll: false,
+          pdfDoc: null,
+          ttsState: 'idle',
         }),
       setNumPages: (numPages) => set({ numPages }),
       setDocLoading: (docLoading) => set({ docLoading }),
@@ -244,6 +262,16 @@ export const useStore = create<ReaderState>()(
       toggleAutoScroll: () => set({ autoScroll: !get().autoScroll }),
       setAutoScrollSpeed: (s) =>
         set({ autoScrollSpeed: clamp(s, MIN_AUTOSCROLL, MAX_AUTOSCROLL) }),
+
+      // text-to-speech
+      pdfDoc: null,
+      setPdfDoc: (pdfDoc) => set({ pdfDoc }),
+      ttsState: 'idle',
+      ttsRate: 1,
+      ttsVoiceURI: null,
+      setTtsState: (ttsState) => set({ ttsState }),
+      setTtsRate: (ttsRate) => set({ ttsRate: clamp(ttsRate, 0.5, 2) }),
+      setTtsVoiceURI: (ttsVoiceURI) => set({ ttsVoiceURI }),
 
       // annotations
       annotations: [],
@@ -317,6 +345,8 @@ export const useStore = create<ReaderState>()(
         dimLevel: s.dimLevel,
         rulerOn: s.rulerOn,
         autoScrollSpeed: s.autoScrollSpeed,
+        ttsRate: s.ttsRate,
+        ttsVoiceURI: s.ttsVoiceURI,
       }),
     },
   ),

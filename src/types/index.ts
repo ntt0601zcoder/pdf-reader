@@ -39,6 +39,9 @@ export const THEMES: ThemeName[] = [
 ]
 export type Lang = 'vi' | 'en'
 
+/** Read-aloud (text-to-speech) playback state. */
+export type TtsState = 'idle' | 'playing' | 'paused'
+
 /** Where the currently open PDF came from. */
 export type DocSource = 'drive' | 'local'
 
