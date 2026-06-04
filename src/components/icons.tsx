@@ -82,6 +82,9 @@ export const IconDownload = (p: P) => (
 export const IconBook = (p: P) => (
   <svg {...base(p)}><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2V5Z" /><path d="M4 19a2 2 0 0 0 2 2h12" /></svg>
 )
+export const IconMore = (p: P) => (
+  <svg {...base(p)}><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none" /></svg>
+)
 export const IconBookmark = (p: P) => (
   <svg {...base(p)}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" /></svg>
 )

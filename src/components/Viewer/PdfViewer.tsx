@@ -4,6 +4,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { pdfjs } from '../../lib/pdf/worker' // side-effect: configures worker + CSS
 import { useStore } from '../../store/useStore'
 import { useMessages } from '../../hooks/useMessages'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { buildOutline } from '../../lib/pdf/outline'
 import { buildSearchIndex, rectsForMatch } from '../../lib/pdf/search'
 import { PdfContext } from './pdfContext'
@@ -28,6 +29,7 @@ export function PdfViewer() {
   const searchIndex = useStore((s) => s.searchIndex)
   const setSearchIndex = useStore((s) => s.setSearchIndex)
   const scale = useStore((s) => s.scale)
+  const narrow = useMediaQuery('(max-width: 760px)')
 
   const viewerRef = useRef<HTMLDivElement>(null)
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null)
@@ -87,6 +89,11 @@ export function PdfViewer() {
       const p1 = await doc.getPage(1)
       const vp = p1.getViewport({ scale: 1, rotation: p1.rotate })
       setBase({ w: vp.width, h: vp.height })
+      // On phones, fit the page to the screen width instead of the desktop 130%.
+      const root = viewerRef.current
+      if (narrow && root && vp.width > 0) {
+        useStore.getState().setScale((root.clientWidth - 16) / vp.width)
+      }
     } catch {
       /* keep defaults */
     }
@@ -109,6 +116,40 @@ export function PdfViewer() {
       cancelled = true
     }
   }, [panel, pdf, searchIndex.length, setSearching])
+
+  // Pinch-to-zoom (two fingers). Non-passive so we can preventDefault the
+  // browser's own page zoom while pinching inside the viewer.
+  useEffect(() => {
+    const root = viewerRef.current
+    if (!root) return
+    let startDist = 0
+    let startScale = 1
+    const dist = (t: TouchList) =>
+      Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        startDist = dist(e.touches)
+        startScale = useStore.getState().scale
+      }
+    }
+    const onMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && startDist > 0) {
+        e.preventDefault()
+        useStore.getState().setScale((startScale * dist(e.touches)) / startDist)
+      }
+    }
+    const onEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) startDist = 0
+    }
+    root.addEventListener('touchstart', onStart, { passive: false })
+    root.addEventListener('touchmove', onMove, { passive: false })
+    root.addEventListener('touchend', onEnd)
+    return () => {
+      root.removeEventListener('touchstart', onStart)
+      root.removeEventListener('touchmove', onMove)
+      root.removeEventListener('touchend', onEnd)
+    }
+  }, [])
 
   // Track the current page via a single IntersectionObserver over all pages.
   useEffect(() => {

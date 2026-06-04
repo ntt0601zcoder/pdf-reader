@@ -214,6 +214,21 @@ textarea {
   border: 1px solid var(--border);
   flex-shrink: 0;
 }
+/* Wider menu used for the mobile "more" sheet. */
+.menu__panel--wide {
+  min-width: 230px;
+}
+.menu__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 8px;
+}
+.menu__sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
 
 /* --- Viewer --------------------------------------------------------------- */
 .viewer {
@@ -687,16 +702,48 @@ textarea {
   white-space: nowrap;
 }
 
-@media (max-width: 720px) {
+/* Dim backdrop behind the sidebar when it overlays content on mobile. */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 29;
+}
+
+@media (max-width: 760px) {
+  .toolbar {
+    gap: 2px;
+    padding: 6px 6px;
+  }
+  .toolbar__title {
+    max-width: 9ch;
+  }
+  .toolbar__divider {
+    margin: 4px 2px;
+  }
+  /* Bigger touch targets on phones. */
+  .icon-btn {
+    padding: 9px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .page-input {
+    width: 3em;
+  }
+  .viewer__pages {
+    padding: 12px 6px 32px;
+  }
+  /* Sidebar slides in as a near-full-width overlay. */
   .sidebar {
     position: absolute;
     right: 0;
     top: 0;
     bottom: 0;
+    width: min(88vw, 360px);
     z-index: 30;
-    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.25);
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.4);
   }
-  .toolbar__title {
-    max-width: 12ch;
+  .menu__item {
+    padding: 11px 10px;
   }
 }
