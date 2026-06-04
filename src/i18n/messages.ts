@@ -61,6 +61,11 @@ export const MESSAGES = {
     layoutHorizontal: 'Lướt ngang',
     layoutDual: 'Sách (2 trang)',
     readingRuler: 'Thước đọc',
+    autoScrollPlay: 'Bắt đầu cuốn',
+    autoScrollPause: 'Dừng cuốn',
+    autoScrollSpeed: 'Tốc độ cuốn',
+    autoScrollFaster: 'Nhanh hơn',
+    autoScrollSlower: 'Chậm hơn',
     openAnother: 'Mở tệp khác',
     closeDoc: 'Đóng',
 
@@ -170,6 +175,11 @@ export const MESSAGES = {
     layoutHorizontal: 'Horizontal',
     layoutDual: 'Two pages',
     readingRuler: 'Reading ruler',
+    autoScrollPlay: 'Start auto-scroll',
+    autoScrollPause: 'Pause auto-scroll',
+    autoScrollSpeed: 'Scroll speed',
+    autoScrollFaster: 'Faster',
+    autoScrollSlower: 'Slower',
     openAnother: 'Open another file',
     closeDoc: 'Close',
 

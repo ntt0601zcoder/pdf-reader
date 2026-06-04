@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useStore } from '../store/useStore'
+import { useStore, AUTOSCROLL_STEP } from '../store/useStore'
 import { useMessages } from '../hooks/useMessages'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { signOut } from '../lib/google/auth'
@@ -21,6 +21,8 @@ import {
   IconMore,
   IconNote,
   IconPalette,
+  IconPause,
+  IconPlay,
   IconRuler,
   IconSearch,
   IconZoomIn,
@@ -45,6 +47,10 @@ export function Toolbar() {
   const setDimLevel = useStore((s) => s.setDimLevel)
   const rulerOn = useStore((s) => s.rulerOn)
   const toggleRuler = useStore((s) => s.toggleRuler)
+  const autoScroll = useStore((s) => s.autoScroll)
+  const autoScrollSpeed = useStore((s) => s.autoScrollSpeed)
+  const toggleAutoScroll = useStore((s) => s.toggleAutoScroll)
+  const setAutoScrollSpeed = useStore((s) => s.setAutoScrollSpeed)
 
   const setScale = useStore((s) => s.setScale)
   const zoomIn = useStore((s) => s.zoomIn)
@@ -264,6 +270,37 @@ export function Toolbar() {
             >
               <IconRuler />
             </button>
+            {pageLayout !== 'horizontal' && (
+              <>
+                <button
+                  className={`icon-btn${autoScroll ? ' is-active' : ''}`}
+                  title={autoScroll ? m.autoScrollPause : m.autoScrollPlay}
+                  aria-pressed={autoScroll}
+                  onClick={toggleAutoScroll}
+                >
+                  {autoScroll ? <IconPause /> : <IconPlay />}
+                </button>
+                {autoScroll && (
+                  <span className="toolbar__seg" aria-label={m.autoScrollSpeed}>
+                    <button
+                      className="icon-btn"
+                      title={m.autoScrollSlower}
+                      onClick={() => setAutoScrollSpeed(autoScrollSpeed - AUTOSCROLL_STEP)}
+                    >
+                      −
+                    </button>
+                    <span className="zoom-level">{autoScrollSpeed}</span>
+                    <button
+                      className="icon-btn"
+                      title={m.autoScrollFaster}
+                      onClick={() => setAutoScrollSpeed(autoScrollSpeed + AUTOSCROLL_STEP)}
+                    >
+                      +
+                    </button>
+                  </span>
+                )}
+              </>
+            )}
           </div>
 
           <div className="toolbar__spacer" />
@@ -417,6 +454,38 @@ export function Toolbar() {
                     {m.readingRuler}
                     {rulerOn ? ' ✓' : ''}
                   </button>
+                  {pageLayout !== 'horizontal' && (
+                    <>
+                      <button
+                        className={`menu__item${autoScroll ? ' is-active' : ''}`}
+                        onClick={toggleAutoScroll}
+                      >
+                        {autoScroll ? (
+                          <IconPause width={16} height={16} />
+                        ) : (
+                          <IconPlay width={16} height={16} />
+                        )}
+                        {autoScroll ? m.autoScrollPause : m.autoScrollPlay}
+                      </button>
+                      <div className="menu__row">
+                        <button
+                          className="icon-btn"
+                          title={m.autoScrollSlower}
+                          onClick={() => setAutoScrollSpeed(autoScrollSpeed - AUTOSCROLL_STEP)}
+                        >
+                          −
+                        </button>
+                        <span className="zoom-level">{autoScrollSpeed}</span>
+                        <button
+                          className="icon-btn"
+                          title={m.autoScrollFaster}
+                          onClick={() => setAutoScrollSpeed(autoScrollSpeed + AUTOSCROLL_STEP)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </>
+                  )}
 
                   <div className="menu__sep" />
 
