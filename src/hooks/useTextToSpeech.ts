@@ -51,6 +51,7 @@ export function useTextToSpeech(): TtsApi {
     if (!supported) return
     sessionRef.current++ // invalidate any in-flight onend
     window.speechSynthesis.cancel()
+    window.speechSynthesis.resume() // clear Chromium's sticky paused flag
     setTtsState('idle')
   }, [supported, setTtsState])
 
@@ -102,6 +103,7 @@ export function useTextToSpeech(): TtsApi {
         if (session === sessionRef.current) stop()
       }
       window.speechSynthesis.cancel() // never queue/double-speak
+      window.speechSynthesis.resume() // never start while engine is paused (Chromium)
       window.speechSynthesis.speak(u)
     },
     [pdf, supported, stop],
@@ -112,6 +114,7 @@ export function useTextToSpeech(): TtsApi {
     useStore.getState().setAutoScroll(false) // mutually exclusive with auto-scroll
     sessionRef.current++
     window.speechSynthesis.cancel()
+    window.speechSynthesis.resume() // clear any sticky paused flag before speaking
     const session = sessionRef.current
     setTtsState('playing')
     speakPage(useStore.getState().currentPage, session)

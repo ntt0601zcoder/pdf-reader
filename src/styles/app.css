@@ -74,6 +74,16 @@ textarea {
   gap: 2px;
 }
 
+/* Compact dropdowns in the toolbar (read-aloud speed / voice). */
+.tts-select {
+  max-width: 130px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 4px;
+}
+
 .toolbar__spacer {
   flex: 1;
 }
