@@ -90,7 +90,14 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
     const page = document.querySelector<HTMLElement>('.pdf-page')
     if (!viewer || !page) return
     const natural = page.clientWidth / scale
-    if (natural > 0) setScale((viewer.clientWidth - (narrow ? 16 : 48)) / natural)
+    if (natural <= 0) return
+    if (pageLayout === 'dual') {
+      // Fit a SPREAD (two pages + the 24px column gap), mirroring the
+      // entering-dual fit in PdfViewer so the two-up layout stays intact.
+      setScale((viewer.clientWidth - 48 - 24) / 2 / natural)
+    } else {
+      setScale((viewer.clientWidth - (narrow ? 16 : 48)) / natural)
+    }
   }
 
   const themeGroups: {

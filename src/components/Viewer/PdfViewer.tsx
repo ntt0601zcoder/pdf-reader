@@ -100,17 +100,29 @@ export function PdfViewer() {
   // Entering dual: a page should be ~half the container, so fit two-up. Runs in
   // a layout effect (after data-layout='dual' applies) so clientWidth is the
   // post-reflow size; the resulting setScale triggers the scale re-pin above.
+  // Leaving dual restores the single-page scale captured on entry.
   const prevLayoutRef = useRef(layout)
+  const preDualScaleRef = useRef<number | null>(null)
   useLayoutEffect(() => {
     const prev = prevLayoutRef.current
     prevLayoutRef.current = layout
-    if (prev === layout || layout !== 'dual') return // only on entering dual
+    if (prev === layout) return
+    if (prev === 'dual' && layout !== 'dual') {
+      // Restore the single-page scale the user had before entering dual.
+      if (preDualScaleRef.current != null) {
+        useStore.getState().setScale(preDualScaleRef.current)
+        preDualScaleRef.current = null
+      }
+      return
+    }
+    if (layout !== 'dual') return // only proceed when entering dual
     const root = viewerRef.current
     const page = root?.querySelector<HTMLElement>('.pdf-page')
     if (!root || !page) return
     const liveScale = useStore.getState().scale
     const natural = page.clientWidth / liveScale
     if (natural <= 0) return
+    preDualScaleRef.current = liveScale // remember to restore on exit
     const gap = 24 // column-gap between the two pages of a spread
     const avail = (root.clientWidth - 48 - gap) / 2 // minus outer padding
     useStore.getState().setScale(avail / natural)
