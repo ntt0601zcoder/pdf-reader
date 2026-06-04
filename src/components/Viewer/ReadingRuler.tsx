@@ -56,11 +56,17 @@ export function ReadingRuler({ viewerRef }: Props) {
       })
     }
     const onLeave = () => setActive(false)
+    // Touch has no mouseleave; hide the band once the last finger lifts.
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) setActive(false)
+    }
 
     viewer.addEventListener('mousemove', onMouse, { passive: true })
     viewer.addEventListener('mouseleave', onLeave, { passive: true })
     viewer.addEventListener('touchstart', onTouch, { passive: true })
     viewer.addEventListener('touchmove', onTouch, { passive: true })
+    viewer.addEventListener('touchend', onTouchEnd, { passive: true })
+    viewer.addEventListener('touchcancel', onTouchEnd, { passive: true })
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       rafRef.current = 0
@@ -68,6 +74,8 @@ export function ReadingRuler({ viewerRef }: Props) {
       viewer.removeEventListener('mouseleave', onLeave)
       viewer.removeEventListener('touchstart', onTouch)
       viewer.removeEventListener('touchmove', onTouch)
+      viewer.removeEventListener('touchend', onTouchEnd)
+      viewer.removeEventListener('touchcancel', onTouchEnd)
     }
   }, [rulerOn, narrow, viewerRef]) // NB: `active` intentionally excluded — listeners bind once
 
