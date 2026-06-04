@@ -70,15 +70,15 @@ export async function saveAnnotationsNow(
   }
 
   const sidecar = buildSidecar(meta, annotations, bookmarks)
+  // Try the id we know; if it's stale (404), fall through to find/create so a
+  // deleted/inaccessible sidecar self-heals into a fresh one (in the app folder).
   if (meta.sidecarFileId) {
-    await updateSidecar(meta.sidecarFileId, sidecar)
-    return meta.sidecarFileId
+    if (await updateSidecar(meta.sidecarFileId, sidecar)) return meta.sidecarFileId
   }
   // Maybe a sidecar exists but we don't know its id yet.
   const found = await findSidecar(meta.driveFileId)
   if (found) {
-    await updateSidecar(found.id, sidecar)
-    return found.id
+    if (await updateSidecar(found.id, sidecar)) return found.id
   }
   return createSidecar(meta.driveFileId, `${meta.name}${SIDECAR_NAME_SUFFIX}`, sidecar)
 }
