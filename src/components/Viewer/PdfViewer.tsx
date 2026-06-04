@@ -30,8 +30,12 @@ export function PdfViewer() {
   const setSearchIndex = useStore((s) => s.setSearchIndex)
   const scale = useStore((s) => s.scale)
   const layout = useStore((s) => s.layout)
-  const horizontal = layout === 'horizontal'
+  const setLayout = useStore((s) => s.setLayout)
+  const horizontal = layout === 'horizontal' // stays false for 'dual' — dual scrolls vertically
   const narrow = useMediaQuery('(max-width: 760px)')
+  // Dual (two-up) would overflow a phone screen, so collapse it to single there.
+  // data-layout uses this coerced value so the dual CSS never applies on phones.
+  const effectiveLayout = narrow && layout === 'dual' ? 'vertical' : layout
 
   const viewerRef = useRef<HTMLDivElement>(null)
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null)
@@ -76,12 +80,37 @@ export function PdfViewer() {
     }
   }, [scale, horizontal])
 
-  // When the layout flips, keep the current page in view.
+  // When the layout flips, keep the current page in view. Keyed on the
+  // coerced layout so vertical↔dual (both horizontal===false) also re-centers.
   useEffect(() => {
     if (useStore.getState().numPages > 0) {
       useStore.getState().requestScroll(useStore.getState().currentPage)
     }
-  }, [horizontal])
+  }, [effectiveLayout])
+
+  // Force single-page on phones: a persisted/desktop 'dual' falls back here.
+  useEffect(() => {
+    if (narrow && useStore.getState().layout === 'dual') setLayout('vertical')
+  }, [narrow, setLayout])
+
+  // Entering dual: a page should be ~half the container, so fit two-up. Runs in
+  // a layout effect (after data-layout='dual' applies) so clientWidth is the
+  // post-reflow size; the resulting setScale triggers the scale re-pin above.
+  const prevLayoutRef = useRef(layout)
+  useLayoutEffect(() => {
+    const prev = prevLayoutRef.current
+    prevLayoutRef.current = layout
+    if (prev === layout || layout !== 'dual') return // only on entering dual
+    const root = viewerRef.current
+    const page = root?.querySelector<HTMLElement>('.pdf-page')
+    if (!root || !page) return
+    const liveScale = useStore.getState().scale
+    const natural = page.clientWidth / liveScale
+    if (natural <= 0) return
+    const gap = 24 // column-gap between the two pages of a spread
+    const avail = (root.clientWidth - 48 - gap) / 2 // minus outer padding
+    useStore.getState().setScale(avail / natural)
+  }, [layout])
 
   // react-pdf reloads when `file` identity changes — memoize on the bytes.
   const file = useMemo(() => (pdfData ? { data: pdfData } : null), [pdfData])
@@ -247,7 +276,7 @@ export function PdfViewer() {
   return (
     <div
       className="viewer"
-      data-layout={layout}
+      data-layout={effectiveLayout}
       ref={viewerRef}
       onScroll={() => {
         if (rafRef.current) return

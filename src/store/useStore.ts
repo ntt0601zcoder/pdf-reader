@@ -18,8 +18,8 @@ import { detectLang } from '../i18n'
 
 export type SyncStatus = 'idle' | 'saving' | 'saved' | 'local' | 'error'
 export type PanelKind = 'outline' | 'search' | 'notes' | 'bookmarks' | null
-/** Page layout: continuous vertical scroll, or horizontal page-by-page swipe. */
-export type PageLayout = 'vertical' | 'horizontal'
+/** Page layout: continuous vertical scroll, horizontal page-by-page swipe, or two-up book spread. */
+export type PageLayout = 'vertical' | 'horizontal' | 'dual'
 
 /** A text selection awaiting a user action (highlight / note / copy). */
 export interface PendingSelection {
@@ -40,7 +40,9 @@ interface ReaderState {
   setLang: (l: Lang) => void
   toggleLang: () => void
   setDefaultColor: (c: HighlightColor) => void
-  toggleLayout: () => void
+  setLayout: (l: PageLayout) => void
+  /** Cycle vertical → horizontal → dual → vertical. */
+  cycleLayout: () => void
 
   // --- auth ---------------------------------------------------------------
   accessToken: string | null
@@ -134,8 +136,16 @@ export const useStore = create<ReaderState>()(
       setLang: (lang) => set({ lang }),
       toggleLang: () => set({ lang: get().lang === 'vi' ? 'en' : 'vi' }),
       setDefaultColor: (defaultColor) => set({ defaultColor }),
-      toggleLayout: () =>
-        set({ layout: get().layout === 'vertical' ? 'horizontal' : 'vertical' }),
+      setLayout: (layout) => set({ layout }),
+      cycleLayout: () =>
+        set((s) => ({
+          layout:
+            s.layout === 'vertical'
+              ? 'horizontal'
+              : s.layout === 'horizontal'
+                ? 'dual'
+                : 'vertical',
+        })),
 
       // auth
       accessToken: null,
