@@ -341,6 +341,39 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
                 <IconStop />
               </button>
             )}
+            {tts.state !== 'idle' && tts.supported && (
+              <>
+                <select
+                  className="tts-select"
+                  aria-label={m.ttsRate}
+                  title={m.ttsRate}
+                  value={tts.rate}
+                  onChange={(e) => tts.setRate(Number(e.target.value))}
+                >
+                  {[0.75, 1, 1.25, 1.5, 1.75, 2].map((r) => (
+                    <option key={r} value={r}>
+                      {r}x
+                    </option>
+                  ))}
+                </select>
+                {tts.voices.length > 0 && (
+                  <select
+                    className="tts-select"
+                    aria-label={m.ttsVoice}
+                    title={m.ttsVoice}
+                    value={tts.voiceURI ?? ''}
+                    onChange={(e) => tts.setVoiceURI(e.target.value || null)}
+                  >
+                    <option value="">{m.ttsVoiceDefault}</option>
+                    {tts.voices.map((v) => (
+                      <option key={v.voiceURI} value={v.voiceURI}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </>
+            )}
           </div>
 
           <div className="toolbar__spacer" />
@@ -581,6 +614,22 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
                         {[0.75, 1, 1.25, 1.5, 1.75, 2].map((r) => (
                           <option key={r} value={r}>
                             {r}x
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {tts.supported && tts.voices.length > 0 && (
+                    <div className="menu__row">
+                      <span className="menu__group-label">{m.ttsVoice}</span>
+                      <select
+                        value={tts.voiceURI ?? ''}
+                        onChange={(e) => tts.setVoiceURI(e.target.value || null)}
+                      >
+                        <option value="">{m.ttsVoiceDefault}</option>
+                        {tts.voices.map((v) => (
+                          <option key={v.voiceURI} value={v.voiceURI}>
+                            {v.name}
                           </option>
                         ))}
                       </select>
