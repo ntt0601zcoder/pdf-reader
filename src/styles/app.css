@@ -55,6 +55,9 @@ textarea {
   border-bottom: 1px solid var(--border);
   flex-wrap: nowrap;
   min-height: 48px;
+  /* position:relative makes the z-index effective (a static element ignores it)
+     so the night-dim overlay (z-index 15) never darkens the toolbar. */
+  position: relative;
   z-index: 20;
 }
 
@@ -490,6 +493,10 @@ textarea {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* Lift above the night-dim overlay (z-index 15) so the panel stays bright;
+     stays below menus (50) and the mobile sidebar override (z-index 30). */
+  position: relative;
+  z-index: 20;
 }
 .sidebar__header {
   display: flex;
