@@ -29,7 +29,7 @@ export function SyncStatus() {
       title={status === 'error' ? m.syncRetry : undefined}
     >
       <span className="sync-dot" />
-      {label}
+      <span className="sync-pill__label">{label}</span>
     </span>
   )
 }

@@ -858,6 +858,15 @@ textarea {
   .toolbar__title {
     max-width: 9ch;
   }
+  /* The sync label ("Saved to Drive" …) is wide and would push the no-wrap
+     toolbar past the viewport, hiding the "⋯" menu. Keep just the status dot. */
+  .sync-pill {
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .sync-pill__label {
+    display: none;
+  }
   .toolbar__divider {
     margin: 4px 2px;
   }
