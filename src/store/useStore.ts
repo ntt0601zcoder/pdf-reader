@@ -11,6 +11,7 @@ import type {
   SearchMatch,
   ThemeName,
 } from '../types'
+import { THEMES } from '../types'
 import { newId } from '../lib/highlights'
 import type { PageIndex } from '../lib/pdf/search'
 import { detectLang } from '../i18n'
@@ -270,7 +271,7 @@ function clamp(n: number, lo: number, hi: number): number {
 function initialTheme(): ThemeName {
   if (typeof document !== 'undefined') {
     const t = document.documentElement.getAttribute('data-theme')
-    if (t === 'light' || t === 'sepia' || t === 'dark') return t
+    if (t && (THEMES as string[]).includes(t)) return t as ThemeName
   }
   return 'light'
 }

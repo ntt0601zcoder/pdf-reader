@@ -72,10 +72,35 @@ export function Toolbar() {
     if (natural > 0) setScale((viewer.clientWidth - 48) / natural)
   }
 
-  const themes: { key: ThemeName; label: string }[] = [
-    { key: 'light', label: m.themeLight },
-    { key: 'sepia', label: m.themeSepia },
-    { key: 'dark', label: m.themeDark },
+  const themeGroups: {
+    label: string
+    items: { key: ThemeName; label: string; swatch: string }[]
+  }[] = [
+    {
+      label: m.themeGroupLight,
+      items: [
+        { key: 'light', label: m.themeLight, swatch: '#ffffff' },
+        { key: 'gray', label: m.themeGray, swatch: '#d3d8dd' },
+        { key: 'sepia', label: m.themeSepia, swatch: '#f4ecd8' },
+        { key: 'solarized-light', label: m.themeSolarizedLight, swatch: '#fdf6e3' },
+      ],
+    },
+    {
+      label: m.themeGroupDark,
+      items: [
+        { key: 'dark', label: m.themeDark, swatch: '#1e2227' },
+        { key: 'dim', label: m.themeDim, swatch: '#2a2f33' },
+        { key: 'night', label: m.themeNight, swatch: '#2a2114' },
+        { key: 'black', label: m.themeBlack, swatch: '#000000' },
+        { key: 'contrast', label: m.themeContrast, swatch: '#000000' },
+        { key: 'one-dark', label: m.themeOneDark, swatch: '#282c34' },
+        { key: 'dracula', label: m.themeDracula, swatch: '#282a36' },
+        { key: 'nord', label: m.themeNord, swatch: '#2e3440' },
+        { key: 'gruvbox', label: m.themeGruvbox, swatch: '#282828' },
+        { key: 'monokai', label: m.themeMonokai, swatch: '#272822' },
+        { key: 'solarized-dark', label: m.themeSolarizedDark, swatch: '#002b36' },
+      ],
+    },
   ]
 
   return (
@@ -205,17 +230,23 @@ export function Toolbar() {
                 onClick={() => setThemeOpen(false)}
               />
               <div className="menu__panel">
-                {themes.map((t) => (
-                  <button
-                    key={t.key}
-                    className={`menu__item${theme === t.key ? ' is-active' : ''}`}
-                    onClick={() => {
-                      setTheme(t.key)
-                      setThemeOpen(false)
-                    }}
-                  >
-                    {t.label}
-                  </button>
+                {themeGroups.map((g) => (
+                  <div key={g.label}>
+                    <div className="menu__group-label">{g.label}</div>
+                    {g.items.map((t) => (
+                      <button
+                        key={t.key}
+                        className={`menu__item${theme === t.key ? ' is-active' : ''}`}
+                        onClick={() => {
+                          setTheme(t.key)
+                          setThemeOpen(false)
+                        }}
+                      >
+                        <span className="menu__swatch" style={{ background: t.swatch }} />
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
             </>

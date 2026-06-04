@@ -79,6 +79,283 @@
   --hl-opacity: 0.32;
 }
 
+/* Light, soft gray — reduces glare for daytime reading. */
+:root[data-theme='gray'] {
+  color-scheme: light;
+
+  --bg: #c9ced3;
+  --bg-elevated: #eef0f2;
+  --fg: #1c2024;
+  --fg-muted: #5a636b;
+  --toolbar-bg: #e7eaed;
+  --sidebar-bg: #dfe3e7;
+  --border: #c2c8ce;
+  --accent: #2f6fed;
+  --accent-fg: #ffffff;
+  --hover: rgba(0, 0, 0, 0.06);
+  --active: rgba(47, 111, 237, 0.12);
+  --page-bg: #eceef0;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.14), 0 2px 18px rgba(0, 0, 0, 0.08);
+
+  --page-filter: brightness(0.95) contrast(0.97);
+  --page-blend: normal;
+  --hl-blend: multiply;
+  --hl-opacity: 0.42;
+}
+
+/* Soft dark gray — gentler than full dark, lower contrast. */
+:root[data-theme='dim'] {
+  color-scheme: dark;
+
+  --bg: #1c1f22;
+  --bg-elevated: #262a2e;
+  --fg: #d6dade;
+  --fg-muted: #99a1a9;
+  --toolbar-bg: #23272b;
+  --sidebar-bg: #1e2225;
+  --border: #353b41;
+  --accent: #6aa3ff;
+  --accent-fg: #0b0e11;
+  --hover: rgba(255, 255, 255, 0.06);
+  --active: rgba(106, 163, 255, 0.16);
+  --page-bg: #2a2f33;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.45), 0 2px 22px rgba(0, 0, 0, 0.4);
+
+  /* Lower invert -> page becomes dark gray (not pure black), softer contrast. */
+  --page-filter: invert(0.86) hue-rotate(180deg) brightness(0.92) contrast(1.9);
+  --page-blend: normal;
+  --hl-blend: lighten;
+  --hl-opacity: 0.3;
+}
+
+/* Warm dark — amber-tinted, lower blue light for late-night reading. */
+:root[data-theme='night'] {
+  color-scheme: dark;
+
+  --bg: #17130f;
+  --bg-elevated: #211b15;
+  --fg: #e9dcc7;
+  --fg-muted: #b09a7d;
+  --toolbar-bg: #1d1812;
+  --sidebar-bg: #15110c;
+  --border: #34291f;
+  --accent: #e0a44a;
+  --accent-fg: #1a140d;
+  --hover: rgba(255, 235, 200, 0.07);
+  --active: rgba(224, 164, 74, 0.18);
+  --page-bg: #1a1510;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 22px rgba(0, 0, 0, 0.45);
+
+  --page-filter: invert(0.9) hue-rotate(180deg) brightness(0.82) contrast(2.05) sepia(0.45);
+  --page-blend: normal;
+  --hl-blend: lighten;
+  --hl-opacity: 0.3;
+}
+
+/* Pure black — best for OLED screens / very dark rooms. */
+:root[data-theme='black'] {
+  color-scheme: dark;
+
+  --bg: #000000;
+  --bg-elevated: #0d0d0d;
+  --fg: #e8e8e8;
+  --fg-muted: #8a8a8a;
+  --toolbar-bg: #060606;
+  --sidebar-bg: #000000;
+  --border: #1d1d1d;
+  --accent: #4b8bff;
+  --accent-fg: #000000;
+  --hover: rgba(255, 255, 255, 0.08);
+  --active: rgba(75, 139, 255, 0.2);
+  --page-bg: #000000;
+  --canvas-shadow: 0 0 0 1px #1a1a1a;
+
+  --page-filter: invert(1) hue-rotate(180deg) brightness(0.72) contrast(2.6);
+  --page-blend: normal;
+  --hl-blend: lighten;
+  --hl-opacity: 0.34;
+}
+
+/* Maximum legibility — crisp pure black/white, no softening. */
+:root[data-theme='contrast'] {
+  color-scheme: dark;
+
+  --bg: #000000;
+  --bg-elevated: #101010;
+  --fg: #ffffff;
+  --fg-muted: #cfcfcf;
+  --toolbar-bg: #000000;
+  --sidebar-bg: #000000;
+  --border: rgba(255, 255, 255, 0.25);
+  --accent: #ffd400;
+  --accent-fg: #000000;
+  --hover: rgba(255, 255, 255, 0.12);
+  --active: rgba(255, 212, 0, 0.22);
+  --page-bg: #000000;
+  --canvas-shadow: 0 0 0 1px #444444;
+
+  --page-filter: invert(1) hue-rotate(180deg);
+  --page-blend: normal;
+  --hl-blend: lighten;
+  --hl-opacity: 0.4;
+}
+
+/* =============================================================================
+   Editor-inspired themes. These use mix-blend on the canvas so the page takes
+   the theme's EXACT background color:
+     - dark themes: invert the page (white->black, text->white) then `screen`
+       over --page-bg, so the page area becomes --page-bg and text stays light.
+     - light themes: `multiply` the page over --page-bg so white->bg, text->dark.
+   (.pdf-page__inner carries --page-bg so the blend has a solid backdrop.)
+   ============================================================================= */
+
+:root[data-theme='one-dark'] {
+  color-scheme: dark;
+  --bg: #21252b;
+  --bg-elevated: #282c34;
+  --fg: #abb2bf;
+  --fg-muted: #707783;
+  --toolbar-bg: #21252b;
+  --sidebar-bg: #1b1f24;
+  --border: #3a4150;
+  --accent: #61afef;
+  --accent-fg: #0b0e11;
+  --hover: rgba(255, 255, 255, 0.06);
+  --active: rgba(97, 175, 239, 0.18);
+  --page-bg: #282c34;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 22px rgba(0, 0, 0, 0.4);
+  --page-filter: invert(1) hue-rotate(180deg) brightness(0.92);
+  --page-blend: screen;
+  --hl-blend: lighten;
+  --hl-opacity: 0.32;
+}
+
+:root[data-theme='dracula'] {
+  color-scheme: dark;
+  --bg: #21222c;
+  --bg-elevated: #282a36;
+  --fg: #f8f8f2;
+  --fg-muted: #6272a4;
+  --toolbar-bg: #21222c;
+  --sidebar-bg: #1b1c24;
+  --border: #44475a;
+  --accent: #bd93f9;
+  --accent-fg: #14151c;
+  --hover: rgba(255, 255, 255, 0.06);
+  --active: rgba(189, 147, 249, 0.2);
+  --page-bg: #282a36;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 22px rgba(0, 0, 0, 0.4);
+  --page-filter: invert(1) hue-rotate(180deg) brightness(0.92);
+  --page-blend: screen;
+  --hl-blend: lighten;
+  --hl-opacity: 0.32;
+}
+
+:root[data-theme='nord'] {
+  color-scheme: dark;
+  --bg: #2b303b;
+  --bg-elevated: #2e3440;
+  --fg: #d8dee9;
+  --fg-muted: #6f7b8f;
+  --toolbar-bg: #2b303b;
+  --sidebar-bg: #262b34;
+  --border: #3b4252;
+  --accent: #88c0d0;
+  --accent-fg: #11151c;
+  --hover: rgba(255, 255, 255, 0.06);
+  --active: rgba(136, 192, 208, 0.18);
+  --page-bg: #2e3440;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 22px rgba(0, 0, 0, 0.4);
+  --page-filter: invert(1) hue-rotate(180deg) brightness(0.92);
+  --page-blend: screen;
+  --hl-blend: lighten;
+  --hl-opacity: 0.32;
+}
+
+:root[data-theme='gruvbox'] {
+  color-scheme: dark;
+  --bg: #1d2021;
+  --bg-elevated: #282828;
+  --fg: #ebdbb2;
+  --fg-muted: #a89984;
+  --toolbar-bg: #1d2021;
+  --sidebar-bg: #1b1b1b;
+  --border: #3c3836;
+  --accent: #fabd2f;
+  --accent-fg: #1d2021;
+  --hover: rgba(255, 255, 255, 0.06);
+  --active: rgba(250, 189, 47, 0.18);
+  --page-bg: #282828;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 22px rgba(0, 0, 0, 0.4);
+  --page-filter: invert(1) hue-rotate(180deg) brightness(0.92);
+  --page-blend: screen;
+  --hl-blend: lighten;
+  --hl-opacity: 0.32;
+}
+
+:root[data-theme='monokai'] {
+  color-scheme: dark;
+  --bg: #1e1f1c;
+  --bg-elevated: #272822;
+  --fg: #f8f8f2;
+  --fg-muted: #9a957f;
+  --toolbar-bg: #1e1f1c;
+  --sidebar-bg: #191a17;
+  --border: #3e3d32;
+  --accent: #a6e22e;
+  --accent-fg: #14150f;
+  --hover: rgba(255, 255, 255, 0.06);
+  --active: rgba(166, 226, 46, 0.16);
+  --page-bg: #272822;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 22px rgba(0, 0, 0, 0.4);
+  --page-filter: invert(1) hue-rotate(180deg) brightness(0.92);
+  --page-blend: screen;
+  --hl-blend: lighten;
+  --hl-opacity: 0.32;
+}
+
+:root[data-theme='solarized-dark'] {
+  color-scheme: dark;
+  --bg: #002129;
+  --bg-elevated: #002b36;
+  --fg: #93a1a1;
+  --fg-muted: #586e75;
+  --toolbar-bg: #002129;
+  --sidebar-bg: #001b22;
+  --border: #0a3a47;
+  --accent: #268bd2;
+  --accent-fg: #001f27;
+  --hover: rgba(255, 255, 255, 0.05);
+  --active: rgba(38, 139, 210, 0.2);
+  --page-bg: #002b36;
+  --canvas-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 22px rgba(0, 0, 0, 0.4);
+  --page-filter: invert(1) hue-rotate(180deg) brightness(0.92);
+  --page-blend: screen;
+  --hl-blend: lighten;
+  --hl-opacity: 0.32;
+}
+
+:root[data-theme='solarized-light'] {
+  color-scheme: light;
+  --bg: #e7e0cb;
+  --bg-elevated: #fdf6e3;
+  --fg: #586e75;
+  --fg-muted: #93a1a1;
+  --toolbar-bg: #eee8d5;
+  --sidebar-bg: #f5efdc;
+  --border: #ddd6c1;
+  --accent: #268bd2;
+  --accent-fg: #ffffff;
+  --hover: rgba(88, 110, 117, 0.08);
+  --active: rgba(38, 139, 210, 0.14);
+  --page-bg: #fdf6e3;
+  --canvas-shadow: 0 1px 4px rgba(101, 90, 40, 0.18), 0 2px 18px rgba(101, 90, 40, 0.1);
+  --page-filter: none;
+  --page-blend: multiply;
+  --hl-blend: multiply;
+  --hl-opacity: 0.4;
+}
+
 /* --- Highlight colors (same hues across themes) --------------------------- */
 :root {
   --hl-yellow: #ffd400;
