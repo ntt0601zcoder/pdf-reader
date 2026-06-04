@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f2630" />
+    <title>Drive PDF Reader</title>
+    <!-- Apply the saved theme before first paint to avoid a flash of the wrong theme. -->
+    <script>
+      (function () {
+        try {
+          var t = null
+          var raw = localStorage.getItem('drive-pdf-reader/settings')
+          if (raw) t = (JSON.parse(raw).state || {}).theme || null
+          if (!t || ['light', 'sepia', 'dark'].indexOf(t) === -1) {
+            t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          }
+          document.documentElement.setAttribute('data-theme', t)
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light')
+        }
+      })()
+    </script>
+    <!-- Google Identity Services (OAuth token client) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Google API loader (used to load the Picker) -->
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
