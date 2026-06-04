@@ -5,6 +5,7 @@ import { pdfjs } from '../../lib/pdf/worker' // side-effect: configures worker +
 import { useStore } from '../../store/useStore'
 import { useMessages } from '../../hooks/useMessages'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { buildOutline } from '../../lib/pdf/outline'
 import { buildSearchIndex, rectsForMatch } from '../../lib/pdf/search'
 import { PdfContext } from './pdfContext'
@@ -41,6 +42,8 @@ export function PdfViewer() {
   const viewerRef = useRef<HTMLDivElement>(null)
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null)
   const [base, setBase] = useState({ w: 612, h: 792 })
+
+  useAutoScroll(viewerRef)
 
   // Scroll anchor (top-most visible page + fraction into it) so zoom doesn't
   // jump the view: page heights change with scale, so we re-pin after re-layout.

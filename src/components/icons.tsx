@@ -91,6 +91,12 @@ export const IconLayoutHorizontal = (p: P) => (
 export const IconLayoutDual = (p: P) => (
   <svg {...base(p)}><rect x="3" y="5" width="8" height="14" rx="1.5" /><rect x="13" y="5" width="8" height="14" rx="1.5" /><path d="M12 5v14" /></svg>
 )
+export const IconPlay = (p: P) => (
+  <svg {...base(p)}><path d="M7 4v16l13-8L7 4Z" fill="currentColor" stroke="none" /></svg>
+)
+export const IconPause = (p: P) => (
+  <svg {...base(p)} fill="currentColor" stroke="none"><rect x="7" y="4" width="4" height="16" rx="1" /><rect x="13" y="4" width="4" height="16" rx="1" /></svg>
+)
 export const IconMore = (p: P) => (
   <svg {...base(p)}><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none" /></svg>
 )

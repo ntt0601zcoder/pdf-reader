@@ -83,6 +83,13 @@ interface ReaderState {
   requestScroll: (page: number, y?: number) => void
   clearPendingScroll: () => void
 
+  // --- auto-scroll --------------------------------------------------------
+  autoScroll: boolean
+  autoScrollSpeed: number // pixels per second
+  setAutoScroll: (v: boolean) => void
+  toggleAutoScroll: () => void
+  setAutoScrollSpeed: (s: number) => void
+
   // --- annotations --------------------------------------------------------
   annotations: Annotation[]
   setAnnotations: (list: Annotation[]) => void
@@ -130,6 +137,10 @@ interface ReaderState {
 const MIN_SCALE = 0.4
 const MAX_SCALE = 4
 const SCALE_STEP = 0.2
+const MIN_AUTOSCROLL = 10 // px/sec
+const MAX_AUTOSCROLL = 400 // px/sec
+/** Step for the auto-scroll speed +/- controls. */
+export const AUTOSCROLL_STEP = 20
 
 export const useStore = create<ReaderState>()(
   persist(
@@ -145,7 +156,9 @@ export const useStore = create<ReaderState>()(
       setLang: (lang) => set({ lang }),
       toggleLang: () => set({ lang: get().lang === 'vi' ? 'en' : 'vi' }),
       setDefaultColor: (defaultColor) => set({ defaultColor }),
-      setLayout: (layout) => set({ layout }),
+      setLayout: (layout) =>
+        // Auto-scroll is for vertical/dual only; stop it when switching to horizontal.
+        set({ layout, autoScroll: layout === 'horizontal' ? false : get().autoScroll }),
       cycleLayout: () =>
         set((s) => ({
           layout:
@@ -207,6 +220,7 @@ export const useStore = create<ReaderState>()(
           searchActiveIndex: -1,
           searchIndex: [],
           pendingSelection: null,
+          autoScroll: false,
         }),
       setNumPages: (numPages) => set({ numPages }),
       setDocLoading: (docLoading) => set({ docLoading }),
@@ -222,6 +236,14 @@ export const useStore = create<ReaderState>()(
       setCurrentPage: (currentPage) => set({ currentPage }),
       requestScroll: (page, y) => set({ pendingScroll: { page, y } }),
       clearPendingScroll: () => set({ pendingScroll: null }),
+
+      // auto-scroll
+      autoScroll: false,
+      autoScrollSpeed: 60,
+      setAutoScroll: (autoScroll) => set({ autoScroll }),
+      toggleAutoScroll: () => set({ autoScroll: !get().autoScroll }),
+      setAutoScrollSpeed: (s) =>
+        set({ autoScrollSpeed: clamp(s, MIN_AUTOSCROLL, MAX_AUTOSCROLL) }),
 
       // annotations
       annotations: [],
@@ -294,6 +316,7 @@ export const useStore = create<ReaderState>()(
         layout: s.layout,
         dimLevel: s.dimLevel,
         rulerOn: s.rulerOn,
+        autoScrollSpeed: s.autoScrollSpeed,
       }),
     },
   ),
