@@ -141,8 +141,12 @@ export async function createSidecar(
   return data.id as string
 }
 
-/** Overwrite an existing sidecar's contents. */
-export async function updateSidecar(fileId: string, sidecar: SidecarFile): Promise<void> {
+/**
+ * Overwrite an existing sidecar's contents.
+ * Returns false if the file no longer exists / isn't accessible (404) so the
+ * caller can recreate it; throws on other errors.
+ */
+export async function updateSidecar(fileId: string, sidecar: SidecarFile): Promise<boolean> {
   const res = await authedFetch(
     `${UPLOAD}/files/${encodeURIComponent(fileId)}?uploadType=media&fields=id`,
     {
@@ -151,7 +155,9 @@ export async function updateSidecar(fileId: string, sidecar: SidecarFile): Promi
       body: JSON.stringify(sidecar),
     },
   )
+  if (res.status === 404) return false // stale id — caller should recreate
   if (!res.ok) throw new Error(`Sidecar update failed: ${res.status} ${await safeText(res)}`)
+  return true
 }
 
 async function safeText(res: Response): Promise<string> {
