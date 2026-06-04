@@ -3,7 +3,7 @@ import type { Lang } from '../types'
 // All UI strings live here. Add a key to BOTH `vi` and `en`.
 export const MESSAGES = {
   vi: {
-    appName: 'Drive PDF Reader',
+    appName: 'PDF Reader',
     tagline: 'Đọc PDF từ Google Drive — highlight, ghi chú, đồng bộ về Drive',
 
     // Welcome
@@ -95,7 +95,7 @@ export const MESSAGES = {
   },
 
   en: {
-    appName: 'Drive PDF Reader',
+    appName: 'PDF Reader',
     tagline: 'Read PDFs from Google Drive — highlight, take notes, synced to Drive',
 
     welcomeTitle: 'Open a PDF to get started',
