@@ -36,6 +36,8 @@ interface ReaderState {
   lang: Lang
   defaultColor: HighlightColor
   layout: PageLayout
+  /** Night-reading dim: opacity (0..0.7) of a black overlay over the reader. */
+  dimLevel: number
   setTheme: (t: ThemeName) => void
   setLang: (l: Lang) => void
   toggleLang: () => void
@@ -43,6 +45,7 @@ interface ReaderState {
   setLayout: (l: PageLayout) => void
   /** Cycle vertical → horizontal → dual → vertical. */
   cycleLayout: () => void
+  setDimLevel: (n: number) => void
 
   // --- auth ---------------------------------------------------------------
   accessToken: string | null
@@ -132,6 +135,7 @@ export const useStore = create<ReaderState>()(
       lang: detectLang(),
       defaultColor: 'yellow',
       layout: 'vertical',
+      dimLevel: 0,
       setTheme: (theme) => set({ theme }),
       setLang: (lang) => set({ lang }),
       toggleLang: () => set({ lang: get().lang === 'vi' ? 'en' : 'vi' }),
@@ -146,6 +150,7 @@ export const useStore = create<ReaderState>()(
                 ? 'dual'
                 : 'vertical',
         })),
+      setDimLevel: (n) => set({ dimLevel: clamp(n, 0, 0.7) }),
 
       // auth
       accessToken: null,
@@ -280,6 +285,7 @@ export const useStore = create<ReaderState>()(
         lang: s.lang,
         defaultColor: s.defaultColor,
         layout: s.layout,
+        dimLevel: s.dimLevel,
       }),
     },
   ),

@@ -9,6 +9,7 @@ import { SyncStatus } from './SyncStatus'
 import {
   IconBookmark,
   IconBookmarkFilled,
+  IconBrightness,
   IconChevronLeft,
   IconChevronRight,
   IconFitWidth,
@@ -39,6 +40,8 @@ export function Toolbar() {
   const toggleBookmark = useStore((s) => s.toggleBookmark)
   const pageLayout = useStore((s) => s.layout)
   const setLayout = useStore((s) => s.setLayout)
+  const dimLevel = useStore((s) => s.dimLevel)
+  const setDimLevel = useStore((s) => s.setDimLevel)
 
   const setScale = useStore((s) => s.setScale)
   const zoomIn = useStore((s) => s.zoomIn)
@@ -128,6 +131,27 @@ export function Toolbar() {
         ))}
       </div>
     ))
+
+  // Night-reading brightness slider, reused in the desktop theme popover and
+  // the mobile more-menu. 0 dim = 100% brightness, 0.7 dim = 0%.
+  const brightnessControl = (
+    <>
+      <div className="menu__group-label">{m.brightness}</div>
+      <div className="menu__slider" onClick={(e) => e.stopPropagation()}>
+        <IconBrightness width={15} height={15} />
+        <input
+          type="range"
+          min={0}
+          max={0.7}
+          step={0.05}
+          value={dimLevel}
+          onChange={(e) => setDimLevel(Number(e.target.value))}
+          aria-label={m.brightness}
+        />
+        <span className="menu__slider-val">{Math.round((1 - dimLevel / 0.7) * 100)}%</span>
+      </div>
+    </>
+  )
 
   return (
     <header className="toolbar">
@@ -278,7 +302,11 @@ export function Toolbar() {
                     style={{ position: 'fixed', inset: 0, zIndex: 49 }}
                     onClick={() => setThemeOpen(false)}
                   />
-                  <div className="menu__panel">{themeList(() => setThemeOpen(false))}</div>
+                  <div className="menu__panel">
+                    {brightnessControl}
+                    <div className="menu__sep" />
+                    {themeList(() => setThemeOpen(false))}
+                  </div>
                 </>
               )}
             </div>
@@ -417,6 +445,9 @@ export function Toolbar() {
                     <IconGlobe width={16} height={16} />
                     {m.language}: {lang === 'vi' ? 'VI' : 'EN'}
                   </button>
+
+                  <div className="menu__sep" />
+                  {brightnessControl}
 
                   <div className="menu__sep" />
                   <div className="menu__group-label">{m.theme}</div>

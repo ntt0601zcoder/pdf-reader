@@ -24,6 +24,7 @@ export default function App() {
             <PdfViewer />
             <Sidebar />
           </div>
+          <DimOverlay />
         </>
       ) : docLoading ? (
         <div className="center-state">
@@ -61,4 +62,16 @@ export default function App() {
       )}
     </div>
   )
+}
+
+/**
+ * Night-reading dim: an app-level, pointer-events:none black layer over the
+ * reading area. It sits below the toolbar/sidebar (see .dim-overlay z-index) so
+ * controls stay bright and clickable, and never touches the page canvas filter
+ * or text selection.
+ */
+function DimOverlay() {
+  const dim = useStore((s) => s.dimLevel)
+  if (dim <= 0) return null
+  return <div className="dim-overlay" aria-hidden style={{ ['--dim' as never]: dim }} />
 }

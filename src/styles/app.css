@@ -236,6 +236,24 @@ textarea {
   background: var(--border);
   margin: 4px 0;
 }
+/* Slider row inside a menu panel (e.g. the brightness control). */
+.menu__slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 8px;
+}
+.menu__slider input[type='range'] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+.menu__slider-val {
+  min-width: 4ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
 
 /* --- Viewer --------------------------------------------------------------- */
 .viewer {
@@ -734,6 +752,21 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Night-reading dim overlay. App-level fixed layer: z-index sits below the
+   toolbar(20)/sidebar(30)/menus(49,50) so controls stay bright, above the
+   pages. Plain alpha black (no mix-blend-mode) so the per-page theme blend
+   (--page-blend on the canvas) is never disturbed. pointer-events:none keeps
+   text selection, background-dismiss and pinch-zoom working through it. */
+.dim-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: var(--dim, 0);
+  pointer-events: none;
+  z-index: 15;
+  transition: opacity 0.15s ease;
 }
 
 /* Dim backdrop behind the sidebar when it overlays content on mobile. */
