@@ -337,25 +337,24 @@ export function initAutosave(): () => void {
         // While a Drive reconcile is pending the PDF isn't parsed yet; ignore
         // transient pre-jump pages so they can't demote Drive's newer position.
         if (pendingReconcile) return
+        // Only act on a genuinely NEW settled page. Debouncing already filters
+        // smooth-scroll bounce; this also skips the work entirely when the page
+        // is unchanged (e.g. the resume jump settling on the page Drive holds),
+        // so neither the local write nor a Drive sync runs for no reason.
+        if (page === pageForSync) return
+        pageForSync = page
+        pageForSyncAt = at
+        pageSynced = false
         void putDocMeta({ ...doc, lastPage: page, lastPageAt: at }).catch(() => {})
-        // Mark for Drive sync only on a genuinely new settled page. Debouncing
-        // means smooth-scroll bounce pages never reach here; skipping when the
-        // page equals the already-synced one avoids a redundant PATCH (e.g. when
-        // the cross-device resume jump settles on the page Drive already holds).
-        if (page !== pageForSync) {
-          pageForSync = page
-          pageForSyncAt = at
-          pageSynced = false
-          // Push the position to Drive shortly after the user settles, so a
-          // read-only session syncs without waiting for close/tab-hide. Silent
-          // (no status flicker). An annotation save, if pending, will cover it.
-          if (doc.source === 'drive') {
-            if (syncTimer) clearTimeout(syncTimer)
-            syncTimer = setTimeout(() => {
-              syncTimer = null
-              void flushSave(true)
-            }, PAGE_SYNC_DEBOUNCE)
-          }
+        // Push the position to Drive shortly after the user settles, so a
+        // read-only session syncs without waiting for close/tab-hide. Silent
+        // (no status flicker). An annotation save, if pending, will cover it.
+        if (doc.source === 'drive') {
+          if (syncTimer) clearTimeout(syncTimer)
+          syncTimer = setTimeout(() => {
+            syncTimer = null
+            void flushSave(true)
+          }, PAGE_SYNC_DEBOUNCE)
         }
       }, PAGE_DEBOUNCE)
     }
