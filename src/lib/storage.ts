@@ -96,6 +96,9 @@ let baselineJson = ''
 let baselineDocId: string | null = null
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 let pageTimer: ReturnType<typeof setTimeout> | null = null
+// Pushes the settled reading position to the Drive sidecar DURING reading (not
+// only on close/hide), so a read-only session still syncs across devices.
+let syncTimer: ReturnType<typeof setTimeout> | null = null
 // Settled reading position to mirror into the Drive sidecar. We write the
 // DEBOUNCED settled page (not the live currentPage, which bounces through
 // intermediate values during a smooth scroll), and only when `pageSynced` is
@@ -115,6 +118,10 @@ let pendingReconcile: { drivePage: number; driveAt: number; docId: string } | nu
 
 const SAVE_DEBOUNCE = 900
 const PAGE_DEBOUNCE = 1200
+// Delay after settling on a new page before pushing the position to Drive. Long
+// enough that flipping through pages doesn't spam Drive, short enough to sync
+// during a read-only session without waiting for the tab to close.
+const PAGE_SYNC_DEBOUNCE = 2500
 
 function stable(annotations: Annotation[], bookmarks: Bookmark[]): string {
   return JSON.stringify({ a: annotations, b: bookmarks })
@@ -147,6 +154,10 @@ export function resetAutosave(): void {
   if (pageTimer) {
     clearTimeout(pageTimer)
     pageTimer = null
+  }
+  if (syncTimer) {
+    clearTimeout(syncTimer)
+    syncTimer = null
   }
   baselineJson = ''
   baselineDocId = null
@@ -222,13 +233,19 @@ export function reconcileReadingPosition(): void {
   }
 }
 
-async function flushSave(): Promise<void> {
+async function flushSave(silent = false): Promise<void> {
   const { doc, annotations, bookmarks, currentPage, setSyncStatus } = useStore.getState()
   if (!doc) return
   // Never write before THIS doc's annotations have loaded (would clobber them).
   if (docReadyForId !== doc.id) return
+  // A pending sync timer is moot — we're saving now.
+  if (syncTimer) {
+    clearTimeout(syncTimer)
+    syncTimer = null
+  }
   const json = stable(annotations, bookmarks)
-  setSyncStatus('saving')
+  // `silent` saves (background position sync) don't flash the status pill.
+  if (!silent) setSyncStatus('saving')
   // Mirror the settled reading position (falls back to the live page on the very
   // first save before any settle). Uses the settle timestamp, not flush time, so
   // "newest wins" reconciliation reflects when the user actually settled there.
@@ -251,7 +268,7 @@ async function flushSave(): Promise<void> {
       useStore.setState({ doc: updated })
       await putDocMeta(updated).catch(() => {})
     }
-    setSyncStatus(doc.source === 'drive' ? 'saved' : 'local')
+    if (!silent) setSyncStatus(doc.source === 'drive' ? 'saved' : 'local')
   } catch {
     setSyncStatus('error')
   }
@@ -329,6 +346,16 @@ export function initAutosave(): () => void {
           pageForSync = page
           pageForSyncAt = at
           pageSynced = false
+          // Push the position to Drive shortly after the user settles, so a
+          // read-only session syncs without waiting for close/tab-hide. Silent
+          // (no status flicker). An annotation save, if pending, will cover it.
+          if (doc.source === 'drive') {
+            if (syncTimer) clearTimeout(syncTimer)
+            syncTimer = setTimeout(() => {
+              syncTimer = null
+              void flushSave(true)
+            }, PAGE_SYNC_DEBOUNCE)
+          }
         }
       }, PAGE_DEBOUNCE)
     }
