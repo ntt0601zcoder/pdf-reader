@@ -8,7 +8,7 @@ import {
   putLocalBookmarks,
 } from './idb'
 import { createSidecar, findSidecar, loadSidecar, updateSidecar } from './google/drive'
-import { buildSidecar, readBookmarks, readSidecar } from './sidecar'
+import { buildSidecar, readBookmarks, readLastPage, readSidecar } from './sidecar'
 import { SIDECAR_NAME_SUFFIX } from '../types'
 
 // =============================================================================
@@ -24,6 +24,9 @@ interface LoadResult {
   annotations: Annotation[]
   bookmarks: Bookmark[]
   sidecarFileId?: string
+  /** Reading position read from the Drive sidecar (for cross-device sync). */
+  lastPage?: number
+  lastPageAt?: number
 }
 
 /** Load annotations + bookmarks for a document (Drive sidecar or local IndexedDB). */
@@ -40,10 +43,11 @@ export async function loadAnnotations(meta: DocMeta): Promise<LoadResult> {
         const sidecar = await loadSidecar(found.id)
         const annotations = readSidecar(sidecar)
         const bookmarks = readBookmarks(sidecar)
+        const { lastPage, lastPageAt } = readLastPage(sidecar)
         // Mirror to local for offline.
         await putLocalAnnotations(meta.id, annotations).catch(() => {})
         await putLocalBookmarks(meta.id, bookmarks).catch(() => {})
-        return { annotations, bookmarks, sidecarFileId: found.id }
+        return { annotations, bookmarks, sidecarFileId: found.id, lastPage, lastPageAt }
       }
       // No sidecar yet — start from whatever we may have mirrored locally.
       return local()
@@ -60,6 +64,8 @@ export async function saveAnnotationsNow(
   meta: DocMeta,
   annotations: Annotation[],
   bookmarks: Bookmark[],
+  lastPage?: number,
+  lastPageAt?: number,
 ): Promise<string | undefined> {
   // Always keep the local mirror up to date.
   await putLocalAnnotations(meta.id, annotations).catch(() => {})
@@ -69,7 +75,7 @@ export async function saveAnnotationsNow(
     return undefined
   }
 
-  const sidecar = buildSidecar(meta, annotations, bookmarks)
+  const sidecar = buildSidecar(meta, annotations, bookmarks, lastPage, lastPageAt)
   // Try the id we know; if it's stale (404), fall through to find/create so a
   // deleted/inaccessible sidecar self-heals into a fresh one (in the app folder).
   if (meta.sidecarFileId) {
@@ -90,6 +96,22 @@ let baselineJson = ''
 let baselineDocId: string | null = null
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 let pageTimer: ReturnType<typeof setTimeout> | null = null
+// Settled reading position to mirror into the Drive sidecar. We write the
+// DEBOUNCED settled page (not the live currentPage, which bounces through
+// intermediate values during a smooth scroll), and only when `pageSynced` is
+// false (the page genuinely advanced past what Drive already has).
+let pageForSync: number | null = null
+let pageForSyncAt = 0
+let pageSynced = true
+// Id of the doc whose annotations have loaded — gates sidecar writes. Doc-keyed
+// (not a bare boolean) so a late load from a previous doc can never enable a
+// write for the current one, and so no flush can overwrite the Drive sidecar
+// with the transient empty array openDoc sets before the real load completes.
+let docReadyForId: string | null = null
+// A Drive reading position that is newer than this device's but can't be applied
+// until the PDF has parsed (numPages known, for range validation). While set,
+// the sidecar's position is held at Drive's value so no flush demotes it.
+let pendingReconcile: { drivePage: number; driveAt: number; docId: string } | null = null
 
 const SAVE_DEBOUNCE = 900
 const PAGE_DEBOUNCE = 1200
@@ -128,15 +150,99 @@ export function resetAutosave(): void {
   }
   baselineJson = ''
   baselineDocId = null
+  pageForSync = null
+  pageForSyncAt = 0
+  pageSynced = true
+  docReadyForId = null
+  pendingReconcile = null
+}
+
+/**
+ * Mark a document's annotations as loaded, so saves (including the close /
+ * tab-hide flush) are allowed for it. Doc-keyed: a stale continuation from a
+ * previously-open doc can never enable a write for the current doc.
+ */
+export function markDocReady(docId: string): void {
+  docReadyForId = docId
+}
+
+/**
+ * Seed the settled reading position after a load. `synced=false` means the
+ * resolved position differs from what the Drive sidecar holds (e.g. this device
+ * read further while offline), so it should be pushed up on the next flush;
+ * `synced=true` means Drive already has it (or we adopted Drive's), so a
+ * tab-hide with no further reading is a no-op.
+ */
+export function seedSyncPage(page: number, at: number, synced: boolean): void {
+  pageForSync = page
+  pageForSyncAt = at
+  pageSynced = synced
+}
+
+/**
+ * Record a Drive reading position that should override this device's once the
+ * PDF has parsed, then try to apply it immediately (no-op if numPages isn't
+ * known yet — onLoadSuccess re-runs reconcileReadingPosition then).
+ */
+export function deferReadingPositionJump(drivePage: number, driveAt: number, docId: string): void {
+  pendingReconcile = { drivePage, driveAt, docId }
+  reconcileReadingPosition()
+}
+
+/**
+ * Apply a deferred cross-device page jump once numPages is known. Jumps to the
+ * Drive page when it is in range, else (out-of-range/stale sidecar) keeps the
+ * local page and marks it for push so the valid page replaces Drive's. Safe to
+ * call repeatedly; no-op when nothing is pending.
+ */
+export function reconcileReadingPosition(): void {
+  const p = pendingReconcile
+  if (!p) return
+  const st = useStore.getState()
+  if (!st.doc || st.doc.id !== p.docId) {
+    pendingReconcile = null
+    return
+  }
+  const numPages = st.numPages
+  if (!numPages) return // PDF not parsed yet — retry after setNumPages
+  pendingReconcile = null
+  if (p.drivePage >= 1 && p.drivePage <= numPages) {
+    if (p.drivePage !== st.currentPage) {
+      st.setCurrentPage(p.drivePage)
+      if (p.drivePage > 1) st.requestScroll(p.drivePage)
+    }
+    seedSyncPage(p.drivePage, p.driveAt, true) // Drive already holds this
+    const synced = { ...st.doc, lastPage: p.drivePage, lastPageAt: p.driveAt }
+    useStore.setState({ doc: synced })
+    void putDocMeta(synced).catch(() => {})
+  } else {
+    // Drive's page is out of range for this file — keep the valid local page and
+    // mark it dirty so it replaces Drive's bad value on the next save.
+    seedSyncPage(st.currentPage, Date.now(), false)
+  }
 }
 
 async function flushSave(): Promise<void> {
-  const { doc, annotations, bookmarks, setSyncStatus } = useStore.getState()
+  const { doc, annotations, bookmarks, currentPage, setSyncStatus } = useStore.getState()
   if (!doc) return
+  // Never write before THIS doc's annotations have loaded (would clobber them).
+  if (docReadyForId !== doc.id) return
   const json = stable(annotations, bookmarks)
   setSyncStatus('saving')
+  // Mirror the settled reading position (falls back to the live page on the very
+  // first save before any settle). Uses the settle timestamp, not flush time, so
+  // "newest wins" reconciliation reflects when the user actually settled there.
+  // While a Drive jump is pending (PDF not parsed), preserve Drive's position so
+  // an annotation save can't demote a newer cross-device page.
+  const page = pendingReconcile ? pendingReconcile.drivePage : pageForSync ?? currentPage
+  const at = pendingReconcile
+    ? pendingReconcile.driveAt
+    : pageForSync != null
+      ? pageForSyncAt
+      : Date.now()
   try {
-    const sidecarId = await saveAnnotationsNow(doc, annotations, bookmarks)
+    const sidecarId = await saveAnnotationsNow(doc, annotations, bookmarks, page, at)
+    pageSynced = true
     baselineJson = json
     baselineDocId = doc.id
     // Remember the sidecar id on the doc so later saves PATCH instead of search.
@@ -157,12 +263,25 @@ export async function flushNow(): Promise<void> {
     clearTimeout(saveTimer)
     saveTimer = null
   }
+  // Fold a still-pending page settle so an explicit flush (close button / retry)
+  // writes the page the user actually ended on, not the last settled one.
+  if (pageTimer && !pendingReconcile) {
+    clearTimeout(pageTimer)
+    pageTimer = null
+    const { doc, currentPage } = useStore.getState()
+    if (doc && currentPage !== pageForSync) {
+      pageForSync = currentPage
+      pageForSyncAt = Date.now()
+      pageSynced = false
+      void putDocMeta({ ...doc, lastPage: currentPage, lastPageAt: pageForSyncAt }).catch(() => {})
+    }
+  }
   await flushSave()
 }
 
 /** Wire store subscriptions for autosave + last-page persistence. Call once. */
 export function initAutosave(): () => void {
-  return useStore.subscribe((state, prev) => {
+  const unsubscribe = useStore.subscribe((state, prev) => {
     // --- annotations or bookmarks changed -> debounced save ---
     if (state.annotations !== prev.annotations || state.bookmarks !== prev.bookmarks) {
       const doc = state.doc
@@ -194,11 +313,40 @@ export function initAutosave(): () => void {
       // Capture the page NOW; reading it when the timer fires could pick up a
       // different (or just-closed) document's current page.
       const page = state.currentPage
+      const at = Date.now()
       if (pageTimer) clearTimeout(pageTimer)
       pageTimer = setTimeout(() => {
         pageTimer = null
-        void putDocMeta({ ...doc, lastPage: page }).catch(() => {})
+        // While a Drive reconcile is pending the PDF isn't parsed yet; ignore
+        // transient pre-jump pages so they can't demote Drive's newer position.
+        if (pendingReconcile) return
+        void putDocMeta({ ...doc, lastPage: page, lastPageAt: at }).catch(() => {})
+        // Mark for Drive sync only on a genuinely new settled page. Debouncing
+        // means smooth-scroll bounce pages never reach here; skipping when the
+        // page equals the already-synced one avoids a redundant PATCH (e.g. when
+        // the cross-device resume jump settles on the page Drive already holds).
+        if (page !== pageForSync) {
+          pageForSync = page
+          pageForSyncAt = at
+          pageSynced = false
+        }
       }, PAGE_DEBOUNCE)
     }
   })
+
+  // Best-effort flush when the tab is hidden (app switch / close) so the reading
+  // position (and any pending annotation edits) reach Drive even without an
+  // explicit close. Skipped when nothing changed since the last sync.
+  const onHide = () => {
+    if (document.visibilityState !== 'hidden') return
+    if (!useStore.getState().doc) return
+    // Only flush when there's a pending edit or an unsynced settled page change.
+    if (saveTimer || !pageSynced) void flushNow()
+  }
+  document.addEventListener('visibilitychange', onHide)
+
+  return () => {
+    unsubscribe()
+    document.removeEventListener('visibilitychange', onHide)
+  }
 }

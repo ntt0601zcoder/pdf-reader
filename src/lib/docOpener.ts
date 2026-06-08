@@ -4,7 +4,14 @@ import { fetchUserEmail } from './google/auth'
 import { downloadPdf } from './google/drive'
 import { pickPdf } from './google/picker'
 import { cacheFileBlob, getCachedFileBlob, getDocMeta, putDocMeta } from './idb'
-import { loadAnnotations, resetAutosave, withSuppressedSave } from './storage'
+import {
+  deferReadingPositionJump,
+  loadAnnotations,
+  markDocReady,
+  resetAutosave,
+  seedSyncPage,
+  withSuppressedSave,
+} from './storage'
 import { newId } from './highlights'
 
 // =============================================================================
@@ -25,6 +32,7 @@ async function applyDoc(meta: DocMeta, bytes: Uint8Array): Promise<void> {
   const merged: DocMeta = {
     ...meta,
     lastPage: meta.lastPage ?? existing?.lastPage,
+    lastPageAt: meta.lastPageAt ?? existing?.lastPageAt,
     sidecarFileId: meta.sidecarFileId ?? existing?.sidecarFileId,
   }
 
@@ -38,7 +46,11 @@ async function applyDoc(meta: DocMeta, bytes: Uint8Array): Promise<void> {
 
   // Load annotations + bookmarks without triggering an immediate save-back.
   try {
-    const { annotations, bookmarks, sidecarFileId } = await loadAnnotations(merged)
+    const { annotations, bookmarks, sidecarFileId, lastPage, lastPageAt } =
+      await loadAnnotations(merged)
+    // The user may have opened a different doc while this load was in flight —
+    // don't apply this doc's data over the now-current one.
+    if (useStore.getState().doc?.id !== merged.id) return
     if (sidecarFileId && sidecarFileId !== merged.sidecarFileId) {
       const withSidecar = { ...merged, sidecarFileId }
       useStore.setState({ doc: withSidecar })
@@ -48,11 +60,34 @@ async function applyDoc(meta: DocMeta, bytes: Uint8Array): Promise<void> {
       useStore.getState().setAnnotations(annotations)
       useStore.getState().setBookmarks(bookmarks)
     })
+    markDocReady(merged.id) // annotations loaded — saves may now write the sidecar
+
+    // Reconcile the reading position. If Drive holds a newer position than this
+    // device, defer the jump until numPages is known (validated + applied by
+    // reconcileReadingPosition, re-run from onLoadSuccess); until then the sidecar
+    // keeps Drive's value so nothing demotes it. Otherwise seed the local page,
+    // pushing it up when Drive doesn't already hold it.
+    const driveWins =
+      lastPage != null &&
+      lastPage >= 1 &&
+      lastPage !== merged.lastPage &&
+      (merged.lastPage == null || (lastPageAt ?? 0) > (merged.lastPageAt ?? 0))
+    if (driveWins) {
+      deferReadingPositionJump(lastPage!, lastPageAt ?? Date.now(), merged.id)
+    } else {
+      const localPage = merged.lastPage ?? useStore.getState().currentPage
+      const alreadyOnDrive = lastPage != null && lastPage === localPage
+      seedSyncPage(localPage, merged.lastPageAt ?? 0, alreadyOnDrive)
+    }
   } catch {
+    if (useStore.getState().doc?.id !== merged.id) return
     withSuppressedSave(() => {
       useStore.getState().setAnnotations([])
       useStore.getState().setBookmarks([])
     })
+    markDocReady(merged.id)
+    // Drive unreachable / no data — nothing to push (a write would fail anyway).
+    seedSyncPage(useStore.getState().currentPage, merged.lastPageAt ?? 0, true)
   }
 }
 

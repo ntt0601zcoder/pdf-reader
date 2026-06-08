@@ -7,6 +7,8 @@ export function buildSidecar(
   meta: DocMeta,
   annotations: Annotation[],
   bookmarks: Bookmark[],
+  lastPage?: number,
+  lastPageAt?: number,
 ): SidecarFile {
   return {
     schema: 'drive-pdf-reader/annotations',
@@ -16,7 +18,21 @@ export function buildSidecar(
     updatedAt: Date.now(),
     annotations,
     bookmarks,
+    // Undefined values are dropped by JSON.stringify, so older readers are unaffected.
+    lastPage,
+    lastPageAt,
   }
+}
+
+/** Read the synced reading position from a sidecar (if present). */
+export function readLastPage(sidecar: SidecarFile | null): {
+  lastPage?: number
+  lastPageAt?: number
+} {
+  if (!sidecar || sidecar.schema !== 'drive-pdf-reader/annotations') return {}
+  const lastPage = typeof sidecar.lastPage === 'number' ? sidecar.lastPage : undefined
+  const lastPageAt = typeof sidecar.lastPageAt === 'number' ? sidecar.lastPageAt : undefined
+  return { lastPage, lastPageAt }
 }
 
 export function readSidecar(sidecar: SidecarFile | null): Annotation[] {
