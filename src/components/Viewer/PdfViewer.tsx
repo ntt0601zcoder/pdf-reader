@@ -3,6 +3,7 @@ import { Document } from 'react-pdf'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { pdfjs } from '../../lib/pdf/worker' // side-effect: configures worker + CSS
 import { useStore } from '../../store/useStore'
+import { reconcileReadingPosition } from '../../lib/storage'
 import { useMessages } from '../../hooks/useMessages'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
@@ -141,6 +142,9 @@ export function PdfViewer() {
     setPdf(doc)
     useStore.getState().setPdfDoc(doc) // exposes the proxy for read-aloud
     setNumPages(doc.numPages)
+    // Apply a deferred cross-device page jump now that numPages is known (no-op
+    // when the jump already ran or nothing is pending).
+    reconcileReadingPosition()
     // Restore the last-read page now that the page elements will exist. The
     // pendingScroll set during openDoc fired before any page was mounted, so we
     // re-request it here once numPages is known.

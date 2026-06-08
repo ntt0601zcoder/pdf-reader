@@ -113,6 +113,8 @@ export interface DocMeta {
   size?: number
   /** Page the user was last on (1-based) — restored on reopen. */
   lastPage?: number
+  /** Epoch ms when lastPage was set (used to reconcile local vs Drive). */
+  lastPageAt?: number
   lastOpened: number
 }
 
@@ -126,6 +128,10 @@ export interface SidecarFile {
   annotations: Annotation[]
   /** Optional for backward-compat with sidecars written before bookmarks. */
   bookmarks?: Bookmark[]
+  /** Last-read page (1-based), synced across devices via Drive. */
+  lastPage?: number
+  /** Epoch ms when lastPage was written (newest wins when reconciling). */
+  lastPageAt?: number
 }
 
 /** A flattened search hit used by the search panel. */
