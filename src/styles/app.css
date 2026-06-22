@@ -548,6 +548,15 @@ textarea {
 .outline-node__row:hover {
   background: var(--hover);
 }
+/* The section matching the current reading position. */
+.outline-node__row.is-active {
+  background: var(--active);
+  color: var(--accent);
+  font-weight: 600;
+}
+.outline-node__row.is-active .outline-node__page {
+  color: var(--accent);
+}
 .outline-node__page {
   margin-left: auto;
   color: var(--fg-muted);
