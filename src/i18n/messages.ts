@@ -141,7 +141,7 @@ export const MESSAGES = {
     recentFiles: 'Recent',
     noRecent: 'No files yet.',
     dropHint: 'or drag & drop a PDF here',
-    starOnGithub: 'hey lovely, spare me a star on GitHub? 😍',
+    starOnGithub: 'Hey lovely, spare me a star on GitHub? 😍',
 
     signIn: 'Sign in',
     signOut: 'Sign out',
