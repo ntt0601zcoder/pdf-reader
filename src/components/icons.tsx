@@ -109,6 +109,9 @@ export const IconMore = (p: P) => (
 export const IconBrightness = (p: P) => (
   <svg {...base(p)}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
 )
+export const IconStar = (p: P) => (
+  <svg {...base(p)} fill="currentColor"><path d="m12 3 2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 18.6l-5.8 3.1 1.1-6.4L2.6 9.8l6.5-.9L12 3Z" /></svg>
+)
 export const IconBookmark = (p: P) => (
   <svg {...base(p)}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" /></svg>
 )

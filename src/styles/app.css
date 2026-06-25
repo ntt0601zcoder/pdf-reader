@@ -713,6 +713,34 @@ textarea {
   color: var(--fg-muted);
   font-size: 13px;
 }
+.welcome__github {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--fg-muted);
+  text-decoration: none;
+  font-size: 13px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+.welcome__github:hover {
+  background: var(--hover);
+  color: var(--fg);
+  transform: translateY(-1px);
+}
+.welcome__star {
+  color: #f5b301;
+  transition: transform 0.2s ease;
+}
+.welcome__github:hover .welcome__star {
+  transform: rotate(-18deg) scale(1.18);
+}
 .welcome__warn {
   margin-top: 20px;
   max-width: 52ch;

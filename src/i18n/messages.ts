@@ -16,6 +16,7 @@ export const MESSAGES = {
     recentFiles: 'Mở gần đây',
     noRecent: 'Chưa có tệp nào.',
     dropHint: 'hoặc kéo–thả tệp PDF vào đây',
+    starOnGithub: 'Thấy hữu ích? Tặng dự án một ngôi sao trên GitHub nhé ✨',
 
     // Auth
     signIn: 'Đăng nhập',
@@ -140,6 +141,7 @@ export const MESSAGES = {
     recentFiles: 'Recent',
     noRecent: 'No files yet.',
     dropHint: 'or drag & drop a PDF here',
+    starOnGithub: 'Enjoying it? Give the project a star on GitHub ✨',
 
     signIn: 'Sign in',
     signOut: 'Sign out',

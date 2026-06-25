@@ -4,7 +4,7 @@ import { isGoogleConfigured } from '../lib/google/config'
 import { openFromDrive, openLocalFile, openRecent } from '../lib/docOpener'
 import { deleteDoc, listRecentDocs } from '../lib/idb'
 import type { DocMeta } from '../types'
-import { IconDrive, IconFile, IconBook, IconTrash } from './icons'
+import { IconDrive, IconFile, IconBook, IconTrash, IconStar } from './icons'
 
 export function Welcome() {
   const m = useMessages()
@@ -68,6 +68,16 @@ export function Welcome() {
       </div>
 
       <p className="welcome__hint">{m.dropHint}</p>
+
+      <a
+        className="welcome__github"
+        href="https://github.com/ntt0601zcoder/pdf-reader"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <IconStar width={16} height={16} className="welcome__star" />
+        {m.starOnGithub}
+      </a>
 
       {!configured && <div className="welcome__warn">{m.notConfigured}</div>}
 
