@@ -906,9 +906,13 @@ textarea {
     background 0.12s ease,
     transform 0.12s ease;
 }
-.nav-back-fab__main:hover {
-  background: var(--hover);
-  transform: translateY(-1px);
+/* Only on hover-capable devices — avoids the sticky :hover that mobile leaves
+   after a tap. (The × is desktop-only, so its hover stays below.) */
+@media (hover: hover) {
+  .nav-back-fab__main:hover {
+    background: var(--hover);
+    transform: translateY(-1px);
+  }
 }
 /* Mobile long-press in progress: red "clearing" state with a filling ring. */
 .nav-back-fab__main.is-holding {
@@ -945,8 +949,8 @@ textarea {
   stroke-dashoffset: 100.5;
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
-  /* Fills over the remaining hold time after the 250ms visual delay. */
-  animation: navRingFill 0.75s linear forwards;
+  /* Fills over the remaining hold time after the visual delay. */
+  animation: navRingFill 0.86s linear forwards;
 }
 @keyframes navRingFill {
   to {

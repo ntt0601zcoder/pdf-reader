@@ -5,7 +5,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery'
 import { IconBack, IconClose } from './icons'
 
 const HOLD_MS = 1000 // total long-press duration to clear the stack
-const HOLD_VISUAL_DELAY_MS = 250 // wait before showing the red/ring so a tap doesn't flash
+const HOLD_VISUAL_DELAY_MS = 140 // wait before showing the red/ring so a tap doesn't flash
 
 /**
  * Floating "go back" control that appears after following an in-document link.
@@ -54,6 +54,23 @@ export function BackNavButton() {
     }, HOLD_MS)
   }
   useEffect(() => cancelHold, [])
+
+  // The component stays mounted (it renders null at depth 0), so transient hold
+  // state would otherwise leak past a clear — making the next appearance show the
+  // red/ring with no press. Reset it whenever the stack empties.
+  useEffect(() => {
+    if (depth !== 0) return
+    if (visualTimer.current) {
+      clearTimeout(visualTimer.current)
+      visualTimer.current = null
+    }
+    if (clearTimer.current) {
+      clearTimeout(clearTimer.current)
+      clearTimer.current = null
+    }
+    showedHold.current = false
+    setHolding(false)
+  }, [depth])
 
   if (depth === 0) return null
   return (
