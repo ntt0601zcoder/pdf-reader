@@ -77,6 +77,9 @@ export const MESSAGES = {
     ttsNotSupported: 'Trình duyệt không hỗ trợ đọc to',
     openAnother: 'Mở tệp khác',
     closeDoc: 'Đóng',
+    navBack: 'Quay lại',
+    navClear: 'Xoá tất cả',
+    navBackHoldHint: 'Chạm để quay lại · giữ 1 giây để xoá tất cả',
 
     // Selection toolbar
     highlight: 'Tô màu',
@@ -200,6 +203,9 @@ export const MESSAGES = {
     ttsNotSupported: 'Read-aloud is not supported in this browser',
     openAnother: 'Open another file',
     closeDoc: 'Close',
+    navBack: 'Back',
+    navClear: 'Clear all',
+    navBackHoldHint: 'Tap to go back · hold 1s to clear all',
 
     highlight: 'Highlight',
     addNote: 'Add note',

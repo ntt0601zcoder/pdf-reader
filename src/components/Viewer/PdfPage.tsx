@@ -73,6 +73,10 @@ export function PdfPage({ pageNumber }: Props) {
     const el = ref.current
     if (!el) return
 
+    // A click on an in-document link (annotation layer) navigates via react-pdf's
+    // onItemClick — don't also run the selection/highlight hit-test for it.
+    if ((e.target as HTMLElement).closest('.annotationLayer')) return
+
     // A selection can start on this page but be released over a sibling page
     // (dragging past the page gap). Resolve the page the selection STARTS on so
     // the highlight is never silently dropped onto the wrong/empty page.
@@ -131,7 +135,7 @@ export function PdfPage({ pageNumber }: Props) {
             pageNumber={pageNumber}
             scale={renderScale}
             renderTextLayer
-            renderAnnotationLayer={false}
+            renderAnnotationLayer
             onRenderSuccess={() => {
               const c = ref.current?.querySelector(
                 '.react-pdf__Page__canvas',

@@ -15,6 +15,19 @@ import { ReadingRuler } from './ReadingRuler'
 
 void pdfjs // ensure the worker module is retained
 
+/**
+ * The target top-Y (PDF user space) of a resolved link destination, for the
+ * common destination types. Returns null when the destination carries no
+ * specific position (Fit/FitB or unknown) — caller falls back to the page top.
+ */
+function destTopY(dest: unknown[]): number | null {
+  const name = (dest[1] as { name?: string } | undefined)?.name
+  if (name === 'XYZ') return typeof dest[3] === 'number' ? dest[3] : null
+  if (name === 'FitH' || name === 'FitBH') return typeof dest[2] === 'number' ? dest[2] : null
+  if (name === 'FitR') return typeof dest[5] === 'number' ? dest[5] : null // [ref,FitR,l,b,r,t]
+  return null
+}
+
 export function PdfViewer() {
   const m = useMessages()
   const pdfData = useStore((s) => s.pdfData)
@@ -288,6 +301,43 @@ export function PdfViewer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchActiveIndex, pdf, searchIndex])
 
+  // An in-document link was clicked (cross-reference, "see page N", figure ref).
+  // Remember where we were so the back button can return here, then jump — to the
+  // link's precise target when the destination carries a Y, else the page top.
+  async function onItemClick({ pageNumber, dest }: { pageNumber: number; dest?: unknown }) {
+    if (!pageNumber) return
+    const root = viewerRef.current
+    const cur = useStore.getState().currentPage
+    let backY: number | undefined
+    if (root) {
+      const el = document.getElementById(`pdf-page-${cur}`)
+      if (el) backY = Math.max(0, root.scrollTop - el.offsetTop)
+    }
+
+    // Resolve the destination's in-page Y (PDF user space → display px) so a
+    // cross-reference lands on the actual target, not the top of the page.
+    let targetY: number | undefined
+    if (pdf && Array.isArray(dest)) {
+      const top = destTopY(dest)
+      if (top != null) {
+        try {
+          const page = await pdf.getPage(pageNumber)
+          const vp = page.getViewport({ scale: 1, rotation: page.rotate })
+          const [, vy] = vp.convertToViewportPoint(0, top)
+          targetY = Math.max(0, vy * useStore.getState().scale)
+        } catch {
+          /* fall back to page top */
+        }
+      }
+    }
+
+    // Same page with no specific target: nothing meaningful to navigate to.
+    if (pageNumber === cur && targetY == null) return
+
+    useStore.getState().pushNav({ page: cur, y: backY })
+    useStore.getState().requestScroll(pageNumber, targetY)
+  }
+
   const ctx = useMemo(
     () => ({ pdf, baseWidth: base.w, baseHeight: base.h }),
     [pdf, base.w, base.h],
@@ -320,6 +370,9 @@ export function PdfViewer() {
           file={file}
           onLoadSuccess={onLoadSuccess}
           onLoadError={(e) => setDocError(e?.message || 'errLoadPdf')}
+          onItemClick={onItemClick}
+          externalLinkTarget="_blank"
+          externalLinkRel="noopener noreferrer"
           loading={<CenterSpinner label={m.loadingPdf} />}
           error={<div className="center-state">{m.errLoadPdf}</div>}
           noData={<span />}

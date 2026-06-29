@@ -23,6 +23,13 @@ export type PanelKind = 'outline' | 'search' | 'notes' | 'bookmarks' | null
 /** Page layout: continuous vertical scroll, horizontal page-by-page swipe, or two-up book spread. */
 export type PageLayout = 'vertical' | 'horizontal' | 'dual'
 
+/** A saved reading position for the link jump-back stack. */
+export interface NavPos {
+  page: number
+  /** Scroll offset within the page (px at capture time), for precise return. */
+  y?: number
+}
+
 /** A text selection awaiting a user action (highlight / note / copy). */
 export interface PendingSelection {
   page: number
@@ -84,6 +91,15 @@ interface ReaderState {
   setCurrentPage: (p: number) => void
   requestScroll: (page: number, y?: number) => void
   clearPendingScroll: () => void
+
+  // --- link navigation history (jump-back stack) --------------------------
+  /** Positions to return to after following in-document links (LIFO). */
+  navStack: NavPos[]
+  pushNav: (pos: NavPos) => void
+  /** Pop the most recent position (returns it; undefined if empty). */
+  popNav: () => NavPos | undefined
+  /** Discard the whole jump-back history. */
+  clearNav: () => void
 
   // --- auto-scroll --------------------------------------------------------
   autoScroll: boolean
@@ -219,6 +235,7 @@ export const useStore = create<ReaderState>()(
           pendingScroll: meta.lastPage && meta.lastPage > 1 ? { page: meta.lastPage } : null,
           pdfDoc: null,
           ttsState: 'idle',
+          navStack: [],
         }),
       closeDoc: () =>
         set({
@@ -239,6 +256,7 @@ export const useStore = create<ReaderState>()(
           autoScroll: false,
           pdfDoc: null,
           ttsState: 'idle',
+          navStack: [],
         }),
       setNumPages: (numPages) => set({ numPages }),
       setDocLoading: (docLoading) => set({ docLoading }),
@@ -254,6 +272,18 @@ export const useStore = create<ReaderState>()(
       setCurrentPage: (currentPage) => set({ currentPage }),
       requestScroll: (page, y) => set({ pendingScroll: { page, y } }),
       clearPendingScroll: () => set({ pendingScroll: null }),
+
+      // link navigation history
+      navStack: [],
+      pushNav: (pos) => set({ navStack: [...get().navStack, pos] }),
+      popNav: () => {
+        const stack = get().navStack
+        if (!stack.length) return undefined
+        const pos = stack[stack.length - 1]
+        set({ navStack: stack.slice(0, -1) })
+        return pos
+      },
+      clearNav: () => set({ navStack: [] }),
 
       // auto-scroll
       autoScroll: false,

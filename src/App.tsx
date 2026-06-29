@@ -6,6 +6,7 @@ import { Toolbar } from './components/Toolbar'
 import { Welcome } from './components/Welcome'
 import { Sidebar } from './components/Sidebar/Sidebar'
 import { PdfViewer } from './components/Viewer/PdfViewer'
+import { BackNavButton } from './components/BackNavButton'
 import { IconClose } from './components/icons'
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
             <PdfViewer />
             <Sidebar />
           </div>
+          <BackNavButton />
           <DimOverlay />
         </>
       ) : docLoading ? (
