@@ -1,4 +1,9 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import { useStore } from '../../store/useStore'
 import { newId } from '../../lib/highlights'
 import type { InkAnnotation, NormPoint, TextAnnotation } from '../../types'
@@ -55,7 +60,8 @@ export function AnnotateLayer({ page, width, height, inks, texts }: Props) {
       e.currentTarget.setPointerCapture(e.pointerId)
       e.preventDefault()
     } else if (tool === 'text') {
-      if (e.target !== ref.current) return // clicked an existing box — it handles itself
+      // Clicking an existing box edits it (handled there); anywhere else adds one.
+      if ((e.target as HTMLElement).closest('.annotate-text')) return
       const p = norm(e)
       const id = newId()
       const now = Date.now()
@@ -176,8 +182,8 @@ function TextBox({
   const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null)
 
   // Fill + focus the box when it enters edit mode (uncontrolled while editing so
-  // the caret doesn't jump).
-  useEffect(() => {
+  // the caret doesn't jump). Layout effect so focus lands before paint.
+  useLayoutEffect(() => {
     if (!editing || !ref.current) return
     ref.current.textContent = t.text
     ref.current.focus()

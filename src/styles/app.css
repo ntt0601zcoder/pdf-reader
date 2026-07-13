@@ -560,11 +560,19 @@ textarea {
   cursor: move;
 }
 .annotate-text.is-editing {
-  outline: 1px dashed var(--accent);
-  background: rgba(128, 128, 128, 0.14);
+  outline: 2px solid var(--accent);
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  padding: 2px 5px;
   cursor: text;
-  min-width: 1ch;
-  min-height: 1em;
+  min-width: 48px;
+  min-height: 1.3em;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.3);
+}
+/* Placeholder for an empty text box being edited. */
+.annotate-text.is-editing:empty::before {
+  content: '…';
+  opacity: 0.5;
 }
 
 /* --- Selection toolbar (floating) ---------------------------------------- */
