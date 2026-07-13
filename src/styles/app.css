@@ -627,8 +627,8 @@ textarea {
   gap: 4px;
   margin-left: auto;
 }
-/* Plain block scroll container (NOT flex) so a page taller than the pane
-   scrolls vertically; the page centers itself with margin:auto. */
+/* Continuous scroll of pages (block container, not flex, so tall content
+   scrolls vertically). */
 .ref-pane__body {
   flex: 1;
   overflow: auto;
@@ -636,11 +636,22 @@ textarea {
   padding: 12px;
   background: var(--bg);
 }
-/* Themed backdrop so mix-blend (editor-dark) themes composite the page right. */
-.ref-pane .react-pdf__Page {
-  margin: 0 auto;
-  background: var(--page-bg) !important;
+.ref-page {
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--page-bg); /* backdrop for mix-blend (editor-dark) themes */
   box-shadow: var(--canvas-shadow);
+}
+.ref-page__num {
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+/* Keep the page canvas layer transparent so the theme blend composites over
+   the --page-bg backdrop on .ref-page. */
+.ref-pane .react-pdf__Page {
+  background: transparent !important;
 }
 .ref-pane__loading {
   display: flex;
