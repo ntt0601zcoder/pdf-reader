@@ -624,17 +624,18 @@ textarea {
   gap: 4px;
   margin-left: auto;
 }
+/* Plain block scroll container (NOT flex) so a page taller than the pane
+   scrolls vertically; the page centers itself with margin:auto. */
 .ref-pane__body {
   flex: 1;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
   background: var(--bg);
 }
 /* Themed backdrop so mix-blend (editor-dark) themes composite the page right. */
 .ref-pane .react-pdf__Page {
+  margin: 0 auto;
   background: var(--page-bg) !important;
   box-shadow: var(--canvas-shadow);
 }
