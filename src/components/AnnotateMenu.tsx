@@ -6,6 +6,28 @@ import type { Tool } from '../store/useStore'
 import { IconPen, IconTextBox, IconEraser, IconUndo } from './icons'
 
 /**
+ * Floating hint shown while an annotate tool is active, so it's clear you draw
+ * or tap ON THE PAGE (the popover closes after picking a tool). Includes Done.
+ */
+export function AnnotateHint() {
+  const tool = useStore((s) => s.tool)
+  const setTool = useStore((s) => s.setTool)
+  const m = useMessages()
+  if (tool === 'none') return null
+  const icon = tool === 'ink' ? <IconPen /> : tool === 'text' ? <IconTextBox /> : <IconEraser />
+  const hint = tool === 'ink' ? m.hintInk : tool === 'text' ? m.hintText : m.hintEraser
+  return (
+    <div className="annotate-hint">
+      <span className="annotate-hint__icon">{icon}</span>
+      <span className="annotate-hint__text">{hint}</span>
+      <button className="annotate-hint__done" onClick={() => setTool('none')}>
+        {m.exitAnnotate}
+      </button>
+    </div>
+  )
+}
+
+/**
  * Pencil button + popover for the annotate tools (freehand ink, text box,
  * eraser) plus color / size and undo. Works over any page, including scanned
  * PDFs, since the drawing overlay doesn't rely on a text layer.
@@ -28,7 +50,10 @@ export function AnnotateMenu() {
       className={`icon-btn${tool === t ? ' is-active' : ''}`}
       title={label}
       aria-pressed={tool === t}
-      onClick={() => setTool(tool === t ? 'none' : t)}
+      onClick={() => {
+        setTool(tool === t ? 'none' : t)
+        setOpen(false) // close so the page is ready for the tool (see AnnotateHint)
+      }}
     >
       {icon}
     </button>

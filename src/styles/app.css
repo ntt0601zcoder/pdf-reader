@@ -256,6 +256,43 @@ textarea {
   display: inline-block;
   border-radius: 50%;
 }
+/* Floating hint shown while an annotate tool is active. */
+.annotate-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 18;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 8px 8px 14px;
+  background: var(--bg-elevated);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
+  font-size: 13px;
+}
+.annotate-hint__icon {
+  display: inline-flex;
+  color: var(--accent);
+}
+.annotate-hint__text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.annotate-hint__done {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 600;
+}
 /* Wider menu used for the mobile "more" sheet. */
 .menu__panel--wide {
   min-width: 230px;

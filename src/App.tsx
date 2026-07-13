@@ -7,6 +7,7 @@ import { Welcome } from './components/Welcome'
 import { Sidebar } from './components/Sidebar/Sidebar'
 import { PdfViewer } from './components/Viewer/PdfViewer'
 import { ReferencePane } from './components/ReferencePane'
+import { AnnotateHint } from './components/AnnotateMenu'
 import { BackNavButton } from './components/BackNavButton'
 import { IconClose } from './components/icons'
 
@@ -30,6 +31,7 @@ export default function App() {
             <ReferencePane />
             <Sidebar />
           </div>
+          <AnnotateHint />
           <BackNavButton />
           <DimOverlay />
         </>
