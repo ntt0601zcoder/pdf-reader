@@ -693,6 +693,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden; /* fixed height — clip an odd-aspect page rather than overlap */
   background: var(--page-bg); /* backdrop for mix-blend (editor-dark) themes */
   box-shadow: var(--canvas-shadow);
 }

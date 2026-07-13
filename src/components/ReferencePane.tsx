@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Page } from 'react-pdf'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { useStore } from '../store/useStore'
@@ -28,7 +28,41 @@ export function ReferencePane() {
   const [topPage, setTopPage] = useState(refPage)
   const [draft, setDraft] = useState(String(refPage))
   const pageWidth = Math.round(width * scale)
-  const zoom = (d: number) => setScale((s) => Math.min(4, Math.max(0.5, Math.round((s + d) * 10) / 10)))
+  const anchorRef = useRef({ page: 1, fraction: 0 })
+  const prevScaleRef = useRef(scale)
+
+  // Remember the top-most visible page (+ fraction into it) so zoom can re-pin.
+  const captureAnchor = () => {
+    const body = bodyRef.current
+    if (!body) return
+    const top = body.scrollTop
+    let page = 1
+    let fraction = 0
+    for (const el of body.querySelectorAll<HTMLElement>('.ref-page')) {
+      if (el.offsetTop <= top + 4) {
+        page = Number(el.dataset.page)
+        fraction = el.offsetHeight ? (top - el.offsetTop) / el.offsetHeight : 0
+      } else break
+    }
+    anchorRef.current = { page, fraction: Math.min(1, Math.max(0, fraction)) }
+  }
+
+  const zoom = (d: number) => {
+    captureAnchor()
+    setScale((s) => Math.min(4, Math.max(0.5, Math.round((s + d) * 10) / 10)))
+  }
+
+  // Re-pin the anchor after a zoom re-lays the pages (fixed heights make offsets
+  // deterministic, so this lands on the same spot instead of jumping pages).
+  useLayoutEffect(() => {
+    const prev = prevScaleRef.current
+    prevScaleRef.current = scale
+    if (prev === scale) return
+    const body = bodyRef.current
+    const { page, fraction } = anchorRef.current
+    const el = document.getElementById(`ref-page-${page}`)
+    if (body && el) body.scrollTop = el.offsetTop + fraction * el.offsetHeight
+  }, [scale])
 
   useEffect(() => setDraft(String(topPage)), [topPage])
 
@@ -207,7 +241,7 @@ function RefPage({
       id={`ref-page-${pageNumber}`}
       data-page={pageNumber}
       className="ref-page"
-      style={{ width, minHeight: height }}
+      style={{ width, height }}
     >
       {visible ? (
         <Page
