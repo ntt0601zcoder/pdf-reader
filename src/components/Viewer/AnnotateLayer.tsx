@@ -2,6 +2,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { useStore } from '../../store/useStore'
@@ -40,7 +41,7 @@ export function AnnotateLayer({ page, width, height, inks, texts }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const erasing = useRef(false)
 
-  const norm = (e: ReactPointerEvent): NormPoint => {
+  const norm = (e: { clientX: number; clientY: number }): NormPoint => {
     const r = ref.current!.getBoundingClientRect()
     return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }
   }
@@ -59,19 +60,34 @@ export function AnnotateLayer({ page, width, height, inks, texts }: Props) {
       setDrawing([norm(e)])
       e.currentTarget.setPointerCapture(e.pointerId)
       e.preventDefault()
-    } else if (tool === 'text') {
-      // Clicking an existing box edits it (handled there); anywhere else adds one.
-      if ((e.target as HTMLElement).closest('.annotate-text')) return
-      const p = norm(e)
-      const id = newId()
-      const now = Date.now()
-      addText({ id, page, x: clamp01(p.x), y: clamp01(p.y), text: '', color: penColor, size: textSize, createdAt: now, updatedAt: now })
-      setEditingId(id)
     } else if (tool === 'eraser') {
       erasing.current = true
       e.currentTarget.setPointerCapture(e.pointerId)
       eraseAt(norm(e))
     }
+    // Text boxes are created on click (below) — the last event of a tap — so the
+    // fresh box isn't blurred (and removed as empty) by the tap's own pointerup.
+  }
+
+  const onClick = (e: ReactMouseEvent) => {
+    if (tool !== 'text') return
+    // Clicking an existing box edits it (handled there); anywhere else adds one.
+    if ((e.target as HTMLElement).closest('.annotate-text')) return
+    const p = norm(e)
+    const id = newId()
+    const now = Date.now()
+    addText({
+      id,
+      page,
+      x: clamp01(p.x),
+      y: clamp01(p.y),
+      text: '',
+      color: penColor,
+      size: textSize,
+      createdAt: now,
+      updatedAt: now,
+    })
+    setEditingId(id)
   }
 
   const onPointerMove = (e: ReactPointerEvent) => {
@@ -108,6 +124,7 @@ export function AnnotateLayer({ page, width, height, inks, texts }: Props) {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onClick={onClick}
     >
       <svg className="annotate-ink" width={width} height={height}>
         {inks.map((ink) => (
