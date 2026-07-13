@@ -234,6 +234,28 @@ textarea {
   border: 1px solid var(--border);
   flex-shrink: 0;
 }
+/* Annotate color swatches. */
+.annotate-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 10px 8px;
+}
+.annotate-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  padding: 0;
+}
+.annotate-swatch.is-active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.annotate-dot {
+  display: inline-block;
+  border-radius: 50%;
+}
 /* Wider menu used for the mobile "more" sheet. */
 .menu__panel--wide {
   min-width: 230px;
@@ -454,6 +476,55 @@ textarea {
   :root {
     --ruler-band-h: 44px;
   }
+}
+
+/* --- Annotate layer (freehand ink + text boxes) -------------------------- */
+.annotate-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6; /* above highlights/links, below the selection toolbar (40) */
+  pointer-events: none; /* reading mode: clicks pass through to text/links */
+}
+/* A tool is active — capture pointer input and stop the page from scrolling
+   under the stroke (touch). Desktop wheel-scroll still works. */
+.annotate-layer:not([data-tool='none']) {
+  pointer-events: auto;
+  touch-action: none;
+}
+.annotate-layer[data-tool='ink'],
+.annotate-layer[data-tool='eraser'] {
+  cursor: crosshair;
+}
+.annotate-ink {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.annotate-text {
+  position: absolute;
+  max-width: 72%;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.25;
+  font-family: inherit;
+  font-weight: 500;
+  outline: none;
+  pointer-events: auto;
+}
+/* Draw over existing text boxes when the pen is active. */
+.annotate-layer[data-tool='ink'] .annotate-text {
+  pointer-events: none;
+}
+.annotate-layer[data-tool='text'] .annotate-text {
+  cursor: move;
+}
+.annotate-text.is-editing {
+  outline: 1px dashed var(--accent);
+  background: rgba(128, 128, 128, 0.14);
+  cursor: text;
+  min-width: 1ch;
+  min-height: 1em;
 }
 
 /* --- Selection toolbar (floating) ---------------------------------------- */

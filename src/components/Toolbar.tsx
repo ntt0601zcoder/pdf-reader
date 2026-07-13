@@ -3,6 +3,7 @@ import { useStore, AUTOSCROLL_STEP } from '../store/useStore'
 import { useMessages } from '../hooks/useMessages'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import type { TtsApi } from '../hooks/useTextToSpeech'
+import { AnnotateMenu } from './AnnotateMenu'
 import { signOut } from '../lib/google/auth'
 import { flushNow } from '../lib/storage'
 import type { ThemeName } from '../types'
@@ -229,6 +230,7 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
         >
           {isBookmarked ? <IconBookmarkFilled /> : <IconBookmark />}
         </button>
+        <AnnotateMenu />
       </div>
 
       {/* ---------- Wide layout: everything inline ---------- */}

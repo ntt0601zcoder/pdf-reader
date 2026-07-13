@@ -88,6 +88,57 @@ export interface Annotation {
   updatedAt: number
 }
 
+/** A point normalized to the page box (0..1), so drawings survive zoom. */
+export interface NormPoint {
+  x: number
+  y: number
+}
+
+/** Absolute pen/text colors (not theme vars) — ink stays the drawn color. */
+export const INK_COLORS: string[] = [
+  '#e5484d',
+  '#111827',
+  '#2563eb',
+  '#16a34a',
+  '#f59e0b',
+  '#ffffff',
+]
+
+/** Ink widths as a fraction of page width. */
+export const INK_WIDTHS: number[] = [0.0025, 0.0045, 0.008]
+/** Text sizes as a fraction of page height. */
+export const TEXT_SIZES: number[] = [0.016, 0.024, 0.034]
+
+/** A freehand ink stroke drawn over a page (works on scanned PDFs). */
+export interface InkAnnotation {
+  id: string
+  /** 1-based page number. */
+  page: number
+  /** Absolute color (hex). */
+  color: string
+  /** Stroke width as a fraction of page width. */
+  width: number
+  /** Path points as 0..1 fractions of the page box. */
+  points: NormPoint[]
+  createdAt: number
+}
+
+/** A free-form text box typed onto a page. */
+export interface TextAnnotation {
+  id: string
+  /** 1-based page number. */
+  page: number
+  /** Top-left position as 0..1 fractions of the page box. */
+  x: number
+  y: number
+  text: string
+  color: string
+  /** Font size as a fraction of page height. */
+  size: number
+  createdAt: number
+  updatedAt: number
+}
+
 /** A page-level bookmark (a saved place to return to), with an optional label. */
 export interface Bookmark {
   id: string
@@ -128,6 +179,9 @@ export interface SidecarFile {
   annotations: Annotation[]
   /** Optional for backward-compat with sidecars written before bookmarks. */
   bookmarks?: Bookmark[]
+  /** Freehand ink + typed text drawn over pages (scanned-PDF friendly). */
+  inks?: InkAnnotation[]
+  texts?: TextAnnotation[]
   /** Last-read page (1-based), synced across devices via Drive. */
   lastPage?: number
   /** Epoch ms when lastPage was written (newest wins when reconciling). */

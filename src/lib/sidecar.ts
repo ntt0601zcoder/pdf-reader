@@ -1,27 +1,50 @@
-import type { Annotation, Bookmark, DocMeta, SidecarFile } from '../types'
+import type {
+  Annotation,
+  Bookmark,
+  DocMeta,
+  InkAnnotation,
+  SidecarFile,
+  TextAnnotation,
+} from '../types'
 
-// Pure transforms between the in-memory annotations/bookmarks and the persisted
-// sidecar document (used for both Drive and import/export).
+// Pure transforms between the in-memory annotations and the persisted sidecar
+// document (used for both Drive and import/export).
 
-export function buildSidecar(
-  meta: DocMeta,
-  annotations: Annotation[],
-  bookmarks: Bookmark[],
-  lastPage?: number,
-  lastPageAt?: number,
-): SidecarFile {
+/** Everything a sidecar carries, in one payload. */
+export interface SidecarPayload {
+  annotations: Annotation[]
+  bookmarks: Bookmark[]
+  inks: InkAnnotation[]
+  texts: TextAnnotation[]
+  lastPage?: number
+  lastPageAt?: number
+}
+
+export function buildSidecar(meta: DocMeta, p: SidecarPayload): SidecarFile {
   return {
     schema: 'drive-pdf-reader/annotations',
     version: 1,
     docName: meta.name,
     sourceFileId: meta.driveFileId,
     updatedAt: Date.now(),
-    annotations,
-    bookmarks,
+    annotations: p.annotations,
+    bookmarks: p.bookmarks,
+    inks: p.inks,
+    texts: p.texts,
     // Undefined values are dropped by JSON.stringify, so older readers are unaffected.
-    lastPage,
-    lastPageAt,
+    lastPage: p.lastPage,
+    lastPageAt: p.lastPageAt,
   }
+}
+
+export function readInks(sidecar: SidecarFile | null): InkAnnotation[] {
+  if (!sidecar || sidecar.schema !== 'drive-pdf-reader/annotations') return []
+  return Array.isArray(sidecar.inks) ? sidecar.inks : []
+}
+
+export function readTexts(sidecar: SidecarFile | null): TextAnnotation[] {
+  if (!sidecar || sidecar.schema !== 'drive-pdf-reader/annotations') return []
+  return Array.isArray(sidecar.texts) ? sidecar.texts : []
 }
 
 /** Read the synced reading position from a sidecar (if present). */

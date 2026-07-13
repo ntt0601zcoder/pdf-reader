@@ -1,14 +1,26 @@
-import type { Annotation, Bookmark, DocMeta } from '../types'
+import type { Annotation, Bookmark, DocMeta, InkAnnotation, TextAnnotation } from '../types'
 import { useStore } from '../store/useStore'
 import {
   getLocalAnnotations,
   getLocalBookmarks,
+  getLocalInks,
+  getLocalTexts,
   putDocMeta,
   putLocalAnnotations,
   putLocalBookmarks,
+  putLocalInks,
+  putLocalTexts,
 } from './idb'
 import { createSidecar, findSidecar, loadSidecar, updateSidecar } from './google/drive'
-import { buildSidecar, readBookmarks, readLastPage, readSidecar } from './sidecar'
+import {
+  buildSidecar,
+  readBookmarks,
+  readInks,
+  readLastPage,
+  readSidecar,
+  readTexts,
+  type SidecarPayload,
+} from './sidecar'
 import { SIDECAR_NAME_SUFFIX } from '../types'
 
 // =============================================================================
@@ -23,17 +35,21 @@ import { SIDECAR_NAME_SUFFIX } from '../types'
 interface LoadResult {
   annotations: Annotation[]
   bookmarks: Bookmark[]
+  inks: InkAnnotation[]
+  texts: TextAnnotation[]
   sidecarFileId?: string
   /** Reading position read from the Drive sidecar (for cross-device sync). */
   lastPage?: number
   lastPageAt?: number
 }
 
-/** Load annotations + bookmarks for a document (Drive sidecar or local IndexedDB). */
+/** Load all annotation kinds for a document (Drive sidecar or local IndexedDB). */
 export async function loadAnnotations(meta: DocMeta): Promise<LoadResult> {
   const local = async (): Promise<LoadResult> => ({
     annotations: await getLocalAnnotations(meta.id),
     bookmarks: await getLocalBookmarks(meta.id),
+    inks: await getLocalInks(meta.id),
+    texts: await getLocalTexts(meta.id),
   })
 
   if (meta.source === 'drive' && meta.driveFileId) {
@@ -43,11 +59,15 @@ export async function loadAnnotations(meta: DocMeta): Promise<LoadResult> {
         const sidecar = await loadSidecar(found.id)
         const annotations = readSidecar(sidecar)
         const bookmarks = readBookmarks(sidecar)
+        const inks = readInks(sidecar)
+        const texts = readTexts(sidecar)
         const { lastPage, lastPageAt } = readLastPage(sidecar)
         // Mirror to local for offline.
         await putLocalAnnotations(meta.id, annotations).catch(() => {})
         await putLocalBookmarks(meta.id, bookmarks).catch(() => {})
-        return { annotations, bookmarks, sidecarFileId: found.id, lastPage, lastPageAt }
+        await putLocalInks(meta.id, inks).catch(() => {})
+        await putLocalTexts(meta.id, texts).catch(() => {})
+        return { annotations, bookmarks, inks, texts, sidecarFileId: found.id, lastPage, lastPageAt }
       }
       // No sidecar yet — start from whatever we may have mirrored locally.
       return local()
@@ -59,23 +79,22 @@ export async function loadAnnotations(meta: DocMeta): Promise<LoadResult> {
   return local()
 }
 
-/** Persist annotations + bookmarks now (no debounce). Returns the sidecar id. */
+/** Persist all annotation kinds now (no debounce). Returns the sidecar id. */
 export async function saveAnnotationsNow(
   meta: DocMeta,
-  annotations: Annotation[],
-  bookmarks: Bookmark[],
-  lastPage?: number,
-  lastPageAt?: number,
+  p: SidecarPayload,
 ): Promise<string | undefined> {
   // Always keep the local mirror up to date.
-  await putLocalAnnotations(meta.id, annotations).catch(() => {})
-  await putLocalBookmarks(meta.id, bookmarks).catch(() => {})
+  await putLocalAnnotations(meta.id, p.annotations).catch(() => {})
+  await putLocalBookmarks(meta.id, p.bookmarks).catch(() => {})
+  await putLocalInks(meta.id, p.inks).catch(() => {})
+  await putLocalTexts(meta.id, p.texts).catch(() => {})
 
   if (meta.source !== 'drive' || !meta.driveFileId) {
     return undefined
   }
 
-  const sidecar = buildSidecar(meta, annotations, bookmarks, lastPage, lastPageAt)
+  const sidecar = buildSidecar(meta, p)
   // Try the id we know; if it's stale (404), fall through to find/create so a
   // deleted/inaccessible sidecar self-heals into a fresh one (in the app folder).
   if (meta.sidecarFileId) {
@@ -123,8 +142,13 @@ const PAGE_DEBOUNCE = 1200
 // during a read-only session without waiting for the tab to close.
 const PAGE_SYNC_DEBOUNCE = 2500
 
-function stable(annotations: Annotation[], bookmarks: Bookmark[]): string {
-  return JSON.stringify({ a: annotations, b: bookmarks })
+function stable(
+  annotations: Annotation[],
+  bookmarks: Bookmark[],
+  inks: InkAnnotation[],
+  texts: TextAnnotation[],
+): string {
+  return JSON.stringify({ a: annotations, b: bookmarks, i: inks, t: texts })
 }
 
 /**
@@ -234,7 +258,8 @@ export function reconcileReadingPosition(): void {
 }
 
 async function flushSave(silent = false): Promise<void> {
-  const { doc, annotations, bookmarks, currentPage, setSyncStatus } = useStore.getState()
+  const { doc, annotations, bookmarks, inks, texts, currentPage, setSyncStatus } =
+    useStore.getState()
   if (!doc) return
   // Never write before THIS doc's annotations have loaded (would clobber them).
   if (docReadyForId !== doc.id) return
@@ -243,7 +268,7 @@ async function flushSave(silent = false): Promise<void> {
     clearTimeout(syncTimer)
     syncTimer = null
   }
-  const json = stable(annotations, bookmarks)
+  const json = stable(annotations, bookmarks, inks, texts)
   // `silent` saves (background position sync) don't flash the status pill.
   if (!silent) setSyncStatus('saving')
   // Mirror the settled reading position (falls back to the live page on the very
@@ -258,7 +283,14 @@ async function flushSave(silent = false): Promise<void> {
       ? pageForSyncAt
       : Date.now()
   try {
-    const sidecarId = await saveAnnotationsNow(doc, annotations, bookmarks, page, at)
+    const sidecarId = await saveAnnotationsNow(doc, {
+      annotations,
+      bookmarks,
+      inks,
+      texts,
+      lastPage: page,
+      lastPageAt: at,
+    })
     pageSynced = true
     baselineJson = json
     baselineDocId = doc.id
@@ -299,11 +331,16 @@ export async function flushNow(): Promise<void> {
 /** Wire store subscriptions for autosave + last-page persistence. Call once. */
 export function initAutosave(): () => void {
   const unsubscribe = useStore.subscribe((state, prev) => {
-    // --- annotations or bookmarks changed -> debounced save ---
-    if (state.annotations !== prev.annotations || state.bookmarks !== prev.bookmarks) {
+    // --- annotations / bookmarks / ink / text changed -> debounced save ---
+    if (
+      state.annotations !== prev.annotations ||
+      state.bookmarks !== prev.bookmarks ||
+      state.inks !== prev.inks ||
+      state.texts !== prev.texts
+    ) {
       const doc = state.doc
       if (doc) {
-        const json = stable(state.annotations, state.bookmarks)
+        const json = stable(state.annotations, state.bookmarks, state.inks, state.texts)
         if (suppress || doc.id !== baselineDocId) {
           // Loading a doc (or first observation) — set the baseline, don't save.
           // Cancel any timer armed before this transition so it can't fire

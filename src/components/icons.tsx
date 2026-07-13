@@ -112,6 +112,18 @@ export const IconBrightness = (p: P) => (
 export const IconBack = (p: P) => (
   <svg {...base(p)}><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
 )
+export const IconPen = (p: P) => (
+  <svg {...base(p)}><path d="M4 20l4-1L19 8l-3-3L5 16l-1 4Z" /><path d="M14 7l3 3" /></svg>
+)
+export const IconTextBox = (p: P) => (
+  <svg {...base(p)}><path d="M6 5h12M12 5v14M9 19h6" /></svg>
+)
+export const IconEraser = (p: P) => (
+  <svg {...base(p)}><path d="M4 15.5 11 8.5l6 6-4.5 4.5H8l-4-4a1 1 0 0 1 0-1.5Z" /><path d="M21 19H10M11 8.5 16 3.5" /></svg>
+)
+export const IconUndo = (p: P) => (
+  <svg {...base(p)}><path d="M3 7v6h6" /><path d="M3.5 13a9 9 0 1 0 2.5-6.3L3 9.5" /></svg>
+)
 export const IconStar = (p: P) => (
   <svg {...base(p)} fill="currentColor"><path d="m12 3 2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 18.6l-5.8 3.1 1.1-6.4L2.6 9.8l6.5-.9L12 3Z" /></svg>
 )

@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Annotation, Bookmark, DocMeta } from '../types'
+import type { Annotation, Bookmark, DocMeta, InkAnnotation, TextAnnotation } from '../types'
 
 // =============================================================================
 // Local persistence (IndexedDB).
@@ -25,6 +25,14 @@ interface ReaderDB extends DBSchema {
     key: string // docId
     value: { docId: string; list: Bookmark[]; updatedAt: number }
   }
+  inks: {
+    key: string // docId
+    value: { docId: string; list: InkAnnotation[]; updatedAt: number }
+  }
+  texts: {
+    key: string // docId
+    value: { docId: string; list: TextAnnotation[]; updatedAt: number }
+  }
   files: {
     key: string // docId
     value: { id: string; blob: Blob }
@@ -32,7 +40,7 @@ interface ReaderDB extends DBSchema {
 }
 
 const DB_NAME = 'drive-pdf-reader'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 let dbPromise: Promise<IDBPDatabase<ReaderDB>> | null = null
 
@@ -48,6 +56,10 @@ function db(): Promise<IDBPDatabase<ReaderDB>> {
         }
         if (oldVersion < 2) {
           database.createObjectStore('bookmarks', { keyPath: 'docId' })
+        }
+        if (oldVersion < 3) {
+          database.createObjectStore('inks', { keyPath: 'docId' })
+          database.createObjectStore('texts', { keyPath: 'docId' })
         }
       },
     })
@@ -76,6 +88,8 @@ export async function deleteDoc(id: string): Promise<void> {
     conn.delete('docs', id),
     conn.delete('annotations', id),
     conn.delete('bookmarks', id),
+    conn.delete('inks', id),
+    conn.delete('texts', id),
     conn.delete('files', id),
   ])
 }
@@ -101,6 +115,24 @@ export async function getLocalBookmarks(docId: string): Promise<Bookmark[]> {
 
 export async function putLocalBookmarks(docId: string, list: Bookmark[]): Promise<void> {
   await (await db()).put('bookmarks', { docId, list, updatedAt: Date.now() })
+}
+
+export async function getLocalInks(docId: string): Promise<InkAnnotation[]> {
+  const rec = await (await db()).get('inks', docId)
+  return rec?.list ?? []
+}
+
+export async function putLocalInks(docId: string, list: InkAnnotation[]): Promise<void> {
+  await (await db()).put('inks', { docId, list, updatedAt: Date.now() })
+}
+
+export async function getLocalTexts(docId: string): Promise<TextAnnotation[]> {
+  const rec = await (await db()).get('texts', docId)
+  return rec?.list ?? []
+}
+
+export async function putLocalTexts(docId: string, list: TextAnnotation[]): Promise<void> {
+  await (await db()).put('texts', { docId, list, updatedAt: Date.now() })
 }
 
 // --- Cached local file blobs ------------------------------------------------

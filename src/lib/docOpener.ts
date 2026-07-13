@@ -46,7 +46,7 @@ async function applyDoc(meta: DocMeta, bytes: Uint8Array): Promise<void> {
 
   // Load annotations + bookmarks without triggering an immediate save-back.
   try {
-    const { annotations, bookmarks, sidecarFileId, lastPage, lastPageAt } =
+    const { annotations, bookmarks, inks, texts, sidecarFileId, lastPage, lastPageAt } =
       await loadAnnotations(merged)
     // The user may have opened a different doc while this load was in flight —
     // don't apply this doc's data over the now-current one.
@@ -59,6 +59,8 @@ async function applyDoc(meta: DocMeta, bytes: Uint8Array): Promise<void> {
     withSuppressedSave(() => {
       useStore.getState().setAnnotations(annotations)
       useStore.getState().setBookmarks(bookmarks)
+      useStore.getState().setInks(inks)
+      useStore.getState().setTexts(texts)
     })
     markDocReady(merged.id) // annotations loaded — saves may now write the sidecar
 
@@ -84,6 +86,8 @@ async function applyDoc(meta: DocMeta, bytes: Uint8Array): Promise<void> {
     withSuppressedSave(() => {
       useStore.getState().setAnnotations([])
       useStore.getState().setBookmarks([])
+      useStore.getState().setInks([])
+      useStore.getState().setTexts([])
     })
     markDocReady(merged.id)
     // Drive unreachable / no data — nothing to push (a write would fail anyway).

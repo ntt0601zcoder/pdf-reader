@@ -6,10 +6,12 @@ import type {
   Bookmark,
   DocMeta,
   HighlightColor,
+  InkAnnotation,
   Lang,
   NormRect,
   OutlineNode,
   SearchMatch,
+  TextAnnotation,
   ThemeName,
   TtsState,
 } from '../types'
@@ -22,6 +24,9 @@ export type SyncStatus = 'idle' | 'saving' | 'saved' | 'local' | 'error'
 export type PanelKind = 'outline' | 'search' | 'notes' | 'bookmarks' | null
 /** Page layout: continuous vertical scroll, horizontal page-by-page swipe, or two-up book spread. */
 export type PageLayout = 'vertical' | 'horizontal' | 'dual'
+
+/** Active annotate tool: reading (none), freehand ink, text box, or eraser. */
+export type Tool = 'none' | 'ink' | 'text' | 'eraser'
 
 /** A saved reading position for the link jump-back stack. */
 export interface NavPos {
@@ -127,6 +132,27 @@ interface ReaderState {
   updateAnnotation: (id: string, patch: Partial<Annotation>) => void
   removeAnnotation: (id: string) => void
 
+  // --- annotate: ink + text (works on scanned pages) ----------------------
+  tool: Tool
+  penColor: string
+  penWidth: number // fraction of page width
+  textSize: number // fraction of page height
+  setTool: (t: Tool) => void
+  setPenColor: (c: string) => void
+  setPenWidth: (w: number) => void
+  setTextSize: (s: number) => void
+  inks: InkAnnotation[]
+  texts: TextAnnotation[]
+  setInks: (list: InkAnnotation[]) => void
+  addInk: (a: InkAnnotation) => void
+  removeInk: (id: string) => void
+  setTexts: (list: TextAnnotation[]) => void
+  addText: (t: TextAnnotation) => void
+  updateText: (id: string, patch: Partial<TextAnnotation>) => void
+  removeText: (id: string) => void
+  /** Undo the most recently created ink or text. */
+  undoAnnot: () => void
+
   // --- bookmarks ----------------------------------------------------------
   bookmarks: Bookmark[]
   setBookmarks: (list: Bookmark[]) => void
@@ -226,6 +252,9 @@ export const useStore = create<ReaderState>()(
           numPages: 0,
           annotations: [],
           bookmarks: [],
+          inks: [],
+          texts: [],
+          tool: 'none',
           outline: [],
           searchQuery: '',
           searchMatches: [],
@@ -244,6 +273,9 @@ export const useStore = create<ReaderState>()(
           numPages: 0,
           annotations: [],
           bookmarks: [],
+          inks: [],
+          texts: [],
+          tool: 'none',
           outline: [],
           docError: null,
           panel: null,
@@ -316,6 +348,42 @@ export const useStore = create<ReaderState>()(
       removeAnnotation: (id) =>
         set({ annotations: get().annotations.filter((a) => a.id !== id) }),
 
+      // annotate (ink + text)
+      tool: 'none',
+      penColor: '#e5484d',
+      penWidth: 0.0045,
+      textSize: 0.024,
+      setTool: (tool) => set({ tool }),
+      setPenColor: (penColor) => set({ penColor }),
+      setPenWidth: (penWidth) => set({ penWidth }),
+      setTextSize: (textSize) => set({ textSize }),
+      inks: [],
+      texts: [],
+      setInks: (inks) => set({ inks }),
+      addInk: (a) => set({ inks: [...get().inks, a] }),
+      removeInk: (id) => set({ inks: get().inks.filter((x) => x.id !== id) }),
+      setTexts: (texts) => set({ texts }),
+      addText: (t) => set({ texts: [...get().texts, t] }),
+      updateText: (id, patch) =>
+        set({
+          texts: get().texts.map((t) =>
+            t.id === id ? { ...t, ...patch, updatedAt: Date.now() } : t,
+          ),
+        }),
+      removeText: (id) => set({ texts: get().texts.filter((t) => t.id !== id) }),
+      undoAnnot: () => {
+        const { inks, texts } = get()
+        const lastInk = inks[inks.length - 1]
+        const lastText = texts[texts.length - 1]
+        if (!lastInk && !lastText) return
+        // Remove whichever was created most recently.
+        if (lastText && (!lastInk || lastText.createdAt >= lastInk.createdAt)) {
+          set({ texts: texts.slice(0, -1) })
+        } else {
+          set({ inks: inks.slice(0, -1) })
+        }
+      },
+
       // bookmarks
       bookmarks: [],
       setBookmarks: (bookmarks) => set({ bookmarks }),
@@ -377,6 +445,9 @@ export const useStore = create<ReaderState>()(
         autoScrollSpeed: s.autoScrollSpeed,
         ttsRate: s.ttsRate,
         ttsVoiceURI: s.ttsVoiceURI,
+        penColor: s.penColor,
+        penWidth: s.penWidth,
+        textSize: s.textSize,
       }),
     },
   ),

@@ -7,6 +7,7 @@ import { usePdf } from './pdfContext'
 import { HighlightLayer } from './HighlightLayer'
 import { SearchLayer } from './SearchLayer'
 import { SelectionToolbar } from './SelectionToolbar'
+import { AnnotateLayer } from './AnnotateLayer'
 import { IconBookmarkFilled } from '../icons'
 
 interface Props {
@@ -35,6 +36,10 @@ export function PdfPage({ pageNumber }: Props) {
     () => annotations.filter((a) => a.page === pageNumber),
     [annotations, pageNumber],
   )
+  const inks = useStore((s) => s.inks)
+  const pageInks = useMemo(() => inks.filter((i) => i.page === pageNumber), [inks, pageNumber])
+  const texts = useStore((s) => s.texts)
+  const pageTexts = useMemo(() => texts.filter((t) => t.page === pageNumber), [texts, pageNumber])
 
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
@@ -72,6 +77,9 @@ export function PdfPage({ pageNumber }: Props) {
   function onMouseUp(e: ReactMouseEvent) {
     const el = ref.current
     if (!el) return
+
+    // While an annotate tool is active the AnnotateLayer owns pointer input.
+    if (useStore.getState().tool !== 'none') return
 
     // A click on an in-document link (annotation layer) navigates via react-pdf's
     // onItemClick — don't also run the selection/highlight hit-test for it.
@@ -160,6 +168,7 @@ export function PdfPage({ pageNumber }: Props) {
 
       <HighlightLayer annotations={pageAnnos} pageWidth={dispW} pageHeight={dispH} />
       <SearchLayer page={pageNumber} pageWidth={dispW} pageHeight={dispH} />
+      <AnnotateLayer page={pageNumber} width={dispW} height={dispH} inks={pageInks} texts={pageTexts} />
       {pendingSelPage === pageNumber && <SelectionToolbar />}
 
       {isBookmarked && (
