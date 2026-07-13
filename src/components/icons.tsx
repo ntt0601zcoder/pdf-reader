@@ -112,6 +112,9 @@ export const IconBrightness = (p: P) => (
 export const IconBack = (p: P) => (
   <svg {...base(p)}><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
 )
+export const IconTranslate = (p: P) => (
+  <svg {...base(p)}><path d="M4 5h7M7.5 5v1.5c0 3-1.6 5.2-4 6.5M5 8.5c0 2.2 2.2 3.8 5 4.3" /><path d="M12.5 20l4-9 4 9M14 17h5" /></svg>
+)
 export const IconSplit = (p: P) => (
   <svg {...base(p)}><rect x="3" y="4" width="18" height="16" rx="1.5" /><path d="M13 4v16" /></svg>
 )

@@ -6,6 +6,7 @@ import { OutlinePanel } from './OutlinePanel'
 import { SearchPanel } from './SearchPanel'
 import { NotesPanel } from './NotesPanel'
 import { BookmarksPanel } from './BookmarksPanel'
+import { TranslatePanel } from './TranslatePanel'
 
 export function Sidebar() {
   const m = useMessages()
@@ -22,7 +23,9 @@ export function Sidebar() {
         ? m.toggleSearch
         : panel === 'bookmarks'
           ? m.bookmarksTitle
-          : m.notesTitle
+          : panel === 'translate'
+            ? m.translateTitle
+            : m.notesTitle
 
   return (
     <>
@@ -38,6 +41,7 @@ export function Sidebar() {
           {panel === 'outline' && <OutlinePanel />}
           {panel === 'search' && <SearchPanel />}
           {panel === 'bookmarks' && <BookmarksPanel />}
+          {panel === 'translate' && <TranslatePanel />}
           {panel === 'notes' && <NotesPanel />}
         </div>
       </aside>

@@ -2,7 +2,7 @@ import { useStore } from '../../store/useStore'
 import { HIGHLIGHT_COLORS, type Annotation, type HighlightColor } from '../../types'
 import { colorVar, newId } from '../../lib/highlights'
 import { useMessages } from '../../hooks/useMessages'
-import { IconCopy, IconNote } from '../icons'
+import { IconCopy, IconNote, IconTranslate } from '../icons'
 
 /**
  * The floating toolbar shown over a fresh text selection. Rendered inside the
@@ -17,6 +17,7 @@ export function SelectionToolbar() {
   const setDefaultColor = useStore((s) => s.setDefaultColor)
   const setPanel = useStore((s) => s.setPanel)
   const setEditingNoteId = useStore((s) => s.setEditingNoteId)
+  const setTranslateInput = useStore((s) => s.setTranslateInput)
 
   if (!sel) return null
 
@@ -69,6 +70,19 @@ export function SelectionToolbar() {
         onClick={() => makeAnnotation(defaultColor, true)}
       >
         <IconNote />
+      </button>
+      <button
+        className="icon-btn"
+        title={m.translate}
+        aria-label={m.translate}
+        onClick={() => {
+          setTranslateInput(sel.text)
+          setPanel('translate')
+          setPendingSelection(null)
+          window.getSelection()?.removeAllRanges()
+        }}
+      >
+        <IconTranslate />
       </button>
       <button
         className="icon-btn"

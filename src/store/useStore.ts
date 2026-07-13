@@ -21,7 +21,7 @@ import type { PageIndex } from '../lib/pdf/search'
 import { detectLang } from '../i18n'
 
 export type SyncStatus = 'idle' | 'saving' | 'saved' | 'local' | 'error'
-export type PanelKind = 'outline' | 'search' | 'notes' | 'bookmarks' | null
+export type PanelKind = 'outline' | 'search' | 'notes' | 'bookmarks' | 'translate' | null
 /** Page layout: continuous vertical scroll, horizontal page-by-page swipe, or two-up book spread. */
 export type PageLayout = 'vertical' | 'horizontal' | 'dual'
 
@@ -195,6 +195,12 @@ interface ReaderState {
   /** Annotation whose note should open in edit mode in the notes panel. */
   editingNoteId: string | null
   setEditingNoteId: (id: string | null) => void
+
+  // --- translate (dictionary on selection / typed word) -------------------
+  translateInput: string
+  translateTarget: Lang
+  setTranslateInput: (s: string) => void
+  setTranslateTarget: (l: Lang) => void
 }
 
 const MIN_SCALE = 0.4
@@ -449,6 +455,12 @@ export const useStore = create<ReaderState>()(
       setPendingSelection: (pendingSelection) => set({ pendingSelection }),
       editingNoteId: null,
       setEditingNoteId: (editingNoteId) => set({ editingNoteId }),
+
+      // translate
+      translateInput: '',
+      translateTarget: detectLang(),
+      setTranslateInput: (translateInput) => set({ translateInput }),
+      setTranslateTarget: (translateTarget) => set({ translateTarget }),
     }),
     {
       name: 'drive-pdf-reader/settings',
@@ -467,6 +479,7 @@ export const useStore = create<ReaderState>()(
         penColor: s.penColor,
         penWidth: s.penWidth,
         textSize: s.textSize,
+        translateTarget: s.translateTarget,
         // Reuse the short-lived (~1h) Drive token across reloads so reopening a
         // book doesn't re-prompt. Scope is drive.file only; a stale/revoked one
         // self-heals via the 401 → interactive retry in authedFetch.

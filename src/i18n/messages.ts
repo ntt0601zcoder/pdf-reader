@@ -91,6 +91,11 @@ export const MESSAGES = {
     exitAnnotate: 'Xong',
     refPane: 'Trang tham chiếu',
     toggleRefPane: 'Mở trang tham chiếu (dò đáp án)',
+    translate: 'Dịch',
+    translateTitle: 'Dịch',
+    translatePlaceholder: 'Nhập hoặc dán từ / câu để dịch…',
+    translateHint: 'Bôi đen chữ rồi bấm Dịch, hoặc gõ từ vào ô trên (dùng được cả PDF scan).',
+    translateError: 'Không dịch được. Thử',
 
     // Selection toolbar
     highlight: 'Tô màu',
@@ -228,6 +233,11 @@ export const MESSAGES = {
     exitAnnotate: 'Done',
     refPane: 'Reference page',
     toggleRefPane: 'Open reference page (check answers)',
+    translate: 'Translate',
+    translateTitle: 'Translate',
+    translatePlaceholder: 'Type or paste a word / sentence…',
+    translateHint: 'Select text and tap Translate, or type a word above (works on scanned PDFs too).',
+    translateError: 'Translation failed. Try',
 
     highlight: 'Highlight',
     addNote: 'Add note',

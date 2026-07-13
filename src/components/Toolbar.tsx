@@ -30,6 +30,7 @@ import {
   IconSpeaker,
   IconSplit,
   IconStop,
+  IconTranslate,
   IconZoomIn,
   IconZoomOut,
 } from './icons'
@@ -414,6 +415,13 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
               <IconNote />
             </button>
             <button
+              className={`icon-btn${panel === 'translate' ? ' is-active' : ''}`}
+              title={m.translate}
+              onClick={() => togglePanel('translate')}
+            >
+              <IconTranslate />
+            </button>
+            <button
               className={`icon-btn${refOpen ? ' is-active' : ''}`}
               title={m.toggleRefPane}
               aria-pressed={refOpen}
@@ -690,6 +698,16 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
                   >
                     <IconNote width={16} height={16} />
                     {m.toggleNotes}
+                  </button>
+                  <button
+                    className={`menu__item${panel === 'translate' ? ' is-active' : ''}`}
+                    onClick={() => {
+                      togglePanel('translate')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <IconTranslate width={16} height={16} />
+                    {m.translate}
                   </button>
                   <button
                     className={`menu__item${refOpen ? ' is-active' : ''}`}
