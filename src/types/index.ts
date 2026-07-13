@@ -139,6 +139,16 @@ export interface TextAnnotation {
   updatedAt: number
 }
 
+/** A standalone note not anchored to a text selection (vocabulary, free notes). */
+export interface Note {
+  id: string
+  text: string
+  /** Page it was created on (informational + jump target). */
+  page?: number
+  createdAt: number
+  updatedAt: number
+}
+
 /** A page-level bookmark (a saved place to return to), with an optional label. */
 export interface Bookmark {
   id: string
@@ -182,6 +192,8 @@ export interface SidecarFile {
   /** Freehand ink + typed text drawn over pages (scanned-PDF friendly). */
   inks?: InkAnnotation[]
   texts?: TextAnnotation[]
+  /** Standalone notes (vocabulary / free notes not tied to a selection). */
+  notes?: Note[]
   /** Last-read page (1-based), synced across devices via Drive. */
   lastPage?: number
   /** Epoch ms when lastPage was written (newest wins when reconciling). */

@@ -1,14 +1,23 @@
-import type { Annotation, Bookmark, DocMeta, InkAnnotation, TextAnnotation } from '../types'
+import type {
+  Annotation,
+  Bookmark,
+  DocMeta,
+  InkAnnotation,
+  Note,
+  TextAnnotation,
+} from '../types'
 import { useStore } from '../store/useStore'
 import {
   getLocalAnnotations,
   getLocalBookmarks,
   getLocalInks,
+  getLocalNotes,
   getLocalTexts,
   putDocMeta,
   putLocalAnnotations,
   putLocalBookmarks,
   putLocalInks,
+  putLocalNotes,
   putLocalTexts,
 } from './idb'
 import { createSidecar, findSidecar, loadSidecar, updateSidecar } from './google/drive'
@@ -17,6 +26,7 @@ import {
   readBookmarks,
   readInks,
   readLastPage,
+  readNotes,
   readSidecar,
   readTexts,
   type SidecarPayload,
@@ -37,6 +47,7 @@ interface LoadResult {
   bookmarks: Bookmark[]
   inks: InkAnnotation[]
   texts: TextAnnotation[]
+  notes: Note[]
   sidecarFileId?: string
   /** Reading position read from the Drive sidecar (for cross-device sync). */
   lastPage?: number
@@ -50,6 +61,7 @@ export async function loadAnnotations(meta: DocMeta): Promise<LoadResult> {
     bookmarks: await getLocalBookmarks(meta.id),
     inks: await getLocalInks(meta.id),
     texts: await getLocalTexts(meta.id),
+    notes: await getLocalNotes(meta.id),
   })
 
   if (meta.source === 'drive' && meta.driveFileId) {
@@ -61,13 +73,24 @@ export async function loadAnnotations(meta: DocMeta): Promise<LoadResult> {
         const bookmarks = readBookmarks(sidecar)
         const inks = readInks(sidecar)
         const texts = readTexts(sidecar)
+        const notes = readNotes(sidecar)
         const { lastPage, lastPageAt } = readLastPage(sidecar)
         // Mirror to local for offline.
         await putLocalAnnotations(meta.id, annotations).catch(() => {})
         await putLocalBookmarks(meta.id, bookmarks).catch(() => {})
         await putLocalInks(meta.id, inks).catch(() => {})
         await putLocalTexts(meta.id, texts).catch(() => {})
-        return { annotations, bookmarks, inks, texts, sidecarFileId: found.id, lastPage, lastPageAt }
+        await putLocalNotes(meta.id, notes).catch(() => {})
+        return {
+          annotations,
+          bookmarks,
+          inks,
+          texts,
+          notes,
+          sidecarFileId: found.id,
+          lastPage,
+          lastPageAt,
+        }
       }
       // No sidecar yet — start from whatever we may have mirrored locally.
       return local()
@@ -89,6 +112,7 @@ export async function saveAnnotationsNow(
   await putLocalBookmarks(meta.id, p.bookmarks).catch(() => {})
   await putLocalInks(meta.id, p.inks).catch(() => {})
   await putLocalTexts(meta.id, p.texts).catch(() => {})
+  await putLocalNotes(meta.id, p.notes).catch(() => {})
 
   if (meta.source !== 'drive' || !meta.driveFileId) {
     return undefined
@@ -147,8 +171,9 @@ function stable(
   bookmarks: Bookmark[],
   inks: InkAnnotation[],
   texts: TextAnnotation[],
+  notes: Note[],
 ): string {
-  return JSON.stringify({ a: annotations, b: bookmarks, i: inks, t: texts })
+  return JSON.stringify({ a: annotations, b: bookmarks, i: inks, t: texts, n: notes })
 }
 
 /**
@@ -258,7 +283,7 @@ export function reconcileReadingPosition(): void {
 }
 
 async function flushSave(silent = false): Promise<void> {
-  const { doc, annotations, bookmarks, inks, texts, currentPage, setSyncStatus } =
+  const { doc, annotations, bookmarks, inks, texts, notes, currentPage, setSyncStatus } =
     useStore.getState()
   if (!doc) return
   // Never write before THIS doc's annotations have loaded (would clobber them).
@@ -268,7 +293,7 @@ async function flushSave(silent = false): Promise<void> {
     clearTimeout(syncTimer)
     syncTimer = null
   }
-  const json = stable(annotations, bookmarks, inks, texts)
+  const json = stable(annotations, bookmarks, inks, texts, notes)
   // `silent` saves (background position sync) don't flash the status pill.
   if (!silent) setSyncStatus('saving')
   // Mirror the settled reading position (falls back to the live page on the very
@@ -288,6 +313,7 @@ async function flushSave(silent = false): Promise<void> {
       bookmarks,
       inks,
       texts,
+      notes,
       lastPage: page,
       lastPageAt: at,
     })
@@ -336,11 +362,18 @@ export function initAutosave(): () => void {
       state.annotations !== prev.annotations ||
       state.bookmarks !== prev.bookmarks ||
       state.inks !== prev.inks ||
-      state.texts !== prev.texts
+      state.texts !== prev.texts ||
+      state.notes !== prev.notes
     ) {
       const doc = state.doc
       if (doc) {
-        const json = stable(state.annotations, state.bookmarks, state.inks, state.texts)
+        const json = stable(
+          state.annotations,
+          state.bookmarks,
+          state.inks,
+          state.texts,
+          state.notes,
+        )
         if (suppress || doc.id !== baselineDocId) {
           // Loading a doc (or first observation) — set the baseline, don't save.
           // Cancel any timer armed before this transition so it can't fire

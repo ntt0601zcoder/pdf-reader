@@ -3,6 +3,7 @@ import type {
   Bookmark,
   DocMeta,
   InkAnnotation,
+  Note,
   SidecarFile,
   TextAnnotation,
 } from '../types'
@@ -16,6 +17,7 @@ export interface SidecarPayload {
   bookmarks: Bookmark[]
   inks: InkAnnotation[]
   texts: TextAnnotation[]
+  notes: Note[]
   lastPage?: number
   lastPageAt?: number
 }
@@ -31,10 +33,16 @@ export function buildSidecar(meta: DocMeta, p: SidecarPayload): SidecarFile {
     bookmarks: p.bookmarks,
     inks: p.inks,
     texts: p.texts,
+    notes: p.notes,
     // Undefined values are dropped by JSON.stringify, so older readers are unaffected.
     lastPage: p.lastPage,
     lastPageAt: p.lastPageAt,
   }
+}
+
+export function readNotes(sidecar: SidecarFile | null): Note[] {
+  if (!sidecar || sidecar.schema !== 'drive-pdf-reader/annotations') return []
+  return Array.isArray(sidecar.notes) ? sidecar.notes : []
 }
 
 export function readInks(sidecar: SidecarFile | null): InkAnnotation[] {
@@ -68,11 +76,12 @@ export function readBookmarks(sidecar: SidecarFile | null): Bookmark[] {
   return Array.isArray(sidecar.bookmarks) ? sidecar.bookmarks : []
 }
 
-/** Export all annotations + bookmarks to a Markdown document (sorted by page). */
+/** Export all annotations + bookmarks + notes to Markdown (sorted by page). */
 export function exportMarkdown(
   meta: DocMeta,
   annotations: Annotation[],
   bookmarks: Bookmark[] = [],
+  notes: Note[] = [],
 ): string {
   const lines: string[] = [`# ${meta.name}`, '']
 
@@ -80,6 +89,14 @@ export function exportMarkdown(
     lines.push('## Bookmarks', '')
     for (const b of [...bookmarks].sort((a, c) => a.page - c.page)) {
       lines.push(`- Trang ${b.page}${b.label ? ` — ${b.label}` : ''}`)
+    }
+    lines.push('')
+  }
+
+  if (notes.length) {
+    lines.push('## Notes', '')
+    for (const n of [...notes].sort((a, c) => a.createdAt - c.createdAt)) {
+      if (n.text.trim()) lines.push(`- ${n.text.replace(/\n+/g, ' ')}`)
     }
     lines.push('')
   }

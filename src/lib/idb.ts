@@ -1,5 +1,12 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Annotation, Bookmark, DocMeta, InkAnnotation, TextAnnotation } from '../types'
+import type {
+  Annotation,
+  Bookmark,
+  DocMeta,
+  InkAnnotation,
+  Note,
+  TextAnnotation,
+} from '../types'
 
 // =============================================================================
 // Local persistence (IndexedDB).
@@ -33,6 +40,10 @@ interface ReaderDB extends DBSchema {
     key: string // docId
     value: { docId: string; list: TextAnnotation[]; updatedAt: number }
   }
+  notes: {
+    key: string // docId
+    value: { docId: string; list: Note[]; updatedAt: number }
+  }
   files: {
     key: string // docId
     value: { id: string; blob: Blob }
@@ -40,7 +51,7 @@ interface ReaderDB extends DBSchema {
 }
 
 const DB_NAME = 'drive-pdf-reader'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 let dbPromise: Promise<IDBPDatabase<ReaderDB>> | null = null
 
@@ -60,6 +71,9 @@ function db(): Promise<IDBPDatabase<ReaderDB>> {
         if (oldVersion < 3) {
           database.createObjectStore('inks', { keyPath: 'docId' })
           database.createObjectStore('texts', { keyPath: 'docId' })
+        }
+        if (oldVersion < 4) {
+          database.createObjectStore('notes', { keyPath: 'docId' })
         }
       },
     })
@@ -90,6 +104,7 @@ export async function deleteDoc(id: string): Promise<void> {
     conn.delete('bookmarks', id),
     conn.delete('inks', id),
     conn.delete('texts', id),
+    conn.delete('notes', id),
     conn.delete('files', id),
   ])
 }
@@ -133,6 +148,15 @@ export async function getLocalTexts(docId: string): Promise<TextAnnotation[]> {
 
 export async function putLocalTexts(docId: string, list: TextAnnotation[]): Promise<void> {
   await (await db()).put('texts', { docId, list, updatedAt: Date.now() })
+}
+
+export async function getLocalNotes(docId: string): Promise<Note[]> {
+  const rec = await (await db()).get('notes', docId)
+  return rec?.list ?? []
+}
+
+export async function putLocalNotes(docId: string, list: Note[]): Promise<void> {
+  await (await db()).put('notes', { docId, list, updatedAt: Date.now() })
 }
 
 // --- Cached local file blobs ------------------------------------------------

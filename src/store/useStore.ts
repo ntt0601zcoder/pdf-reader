@@ -9,6 +9,7 @@ import type {
   InkAnnotation,
   Lang,
   NormRect,
+  Note,
   OutlineNode,
   SearchMatch,
   TextAnnotation,
@@ -160,6 +161,13 @@ interface ReaderState {
   /** Undo the most recently created ink or text. */
   undoAnnot: () => void
 
+  // --- standalone notes (vocabulary / free notes) -------------------------
+  notes: Note[]
+  setNotes: (list: Note[]) => void
+  addNote: (n: Note) => void
+  updateNote: (id: string, patch: Partial<Note>) => void
+  removeNote: (id: string) => void
+
   // --- bookmarks ----------------------------------------------------------
   bookmarks: Bookmark[]
   setBookmarks: (list: Bookmark[]) => void
@@ -267,6 +275,7 @@ export const useStore = create<ReaderState>()(
           bookmarks: [],
           inks: [],
           texts: [],
+          notes: [],
           tool: 'none',
           outline: [],
           searchQuery: '',
@@ -290,6 +299,7 @@ export const useStore = create<ReaderState>()(
           bookmarks: [],
           inks: [],
           texts: [],
+          notes: [],
           tool: 'none',
           outline: [],
           docError: null,
@@ -408,6 +418,18 @@ export const useStore = create<ReaderState>()(
           set({ inks: inks.slice(0, -1) })
         }
       },
+
+      // standalone notes
+      notes: [],
+      setNotes: (notes) => set({ notes }),
+      addNote: (n) => set({ notes: [...get().notes, n] }),
+      updateNote: (id, patch) =>
+        set({
+          notes: get().notes.map((n) =>
+            n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n,
+          ),
+        }),
+      removeNote: (id) => set({ notes: get().notes.filter((n) => n.id !== id) }),
 
       // bookmarks
       bookmarks: [],

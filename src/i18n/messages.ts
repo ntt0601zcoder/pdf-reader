@@ -125,7 +125,9 @@ export const MESSAGES = {
 
     // Notes panel
     notesTitle: 'Ghi chú & Highlight',
-    noNotes: 'Chưa có highlight hay ghi chú nào.',
+    noNotes: 'Chưa có gì. Bấm “Ghi chú mới” để lưu từ vựng/ghi chú, hoặc bôi đen chữ.',
+    newNote: 'Ghi chú mới',
+    confirmDeleteNote: 'Xoá ghi chú này?',
     notePlaceholder: 'Viết ghi chú…',
     save: 'Lưu',
     cancel: 'Huỷ',
@@ -265,7 +267,9 @@ export const MESSAGES = {
     bookmarkLabelPlaceholder: 'Label (optional)…',
 
     notesTitle: 'Notes & Highlights',
-    noNotes: 'No highlights or notes yet.',
+    noNotes: 'Nothing yet. Tap “New note” to save vocabulary/notes, or select text.',
+    newNote: 'New note',
+    confirmDeleteNote: 'Delete this note?',
     notePlaceholder: 'Write a note…',
     save: 'Save',
     cancel: 'Cancel',
