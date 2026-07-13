@@ -512,8 +512,11 @@ textarea {
   outline: none;
   pointer-events: auto;
 }
-/* Draw over existing text boxes when the pen is active. */
-.annotate-layer[data-tool='ink'] .annotate-text {
+/* Draw over existing text boxes when the pen is active, and let clicks pass
+   through them in reading mode so text selection / links under a box keep
+   working (only the text/eraser tools interact with boxes). */
+.annotate-layer[data-tool='ink'] .annotate-text,
+.annotate-layer[data-tool='none'] .annotate-text {
   pointer-events: none;
 }
 .annotate-layer[data-tool='text'] .annotate-text {
