@@ -97,6 +97,13 @@ interface ReaderState {
   requestScroll: (page: number, y?: number) => void
   clearPendingScroll: () => void
 
+  // --- reference pane (peek at another page; transient, not saved) --------
+  refOpen: boolean
+  refPage: number
+  toggleRef: () => void
+  setRefPage: (p: number) => void
+  closeRef: () => void
+
   // --- link navigation history (jump-back stack) --------------------------
   /** Positions to return to after following in-document links (LIFO). */
   navStack: NavPos[]
@@ -265,6 +272,8 @@ export const useStore = create<ReaderState>()(
           pdfDoc: null,
           ttsState: 'idle',
           navStack: [],
+          refOpen: false,
+          refPage: 1,
         }),
       closeDoc: () =>
         set({
@@ -289,6 +298,8 @@ export const useStore = create<ReaderState>()(
           pdfDoc: null,
           ttsState: 'idle',
           navStack: [],
+          refOpen: false,
+          refPage: 1,
         }),
       setNumPages: (numPages) => set({ numPages }),
       setDocLoading: (docLoading) => set({ docLoading }),
@@ -304,6 +315,14 @@ export const useStore = create<ReaderState>()(
       setCurrentPage: (currentPage) => set({ currentPage }),
       requestScroll: (page, y) => set({ pendingScroll: { page, y } }),
       clearPendingScroll: () => set({ pendingScroll: null }),
+
+      // reference pane (peek at another page)
+      refOpen: false,
+      refPage: 1,
+      toggleRef: () =>
+        set((s) => ({ refOpen: !s.refOpen, refPage: s.refOpen ? s.refPage : s.currentPage })),
+      setRefPage: (refPage) => set({ refPage }),
+      closeRef: () => set({ refOpen: false }),
 
       // link navigation history
       navStack: [],

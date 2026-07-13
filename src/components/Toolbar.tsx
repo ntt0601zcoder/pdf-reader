@@ -28,6 +28,7 @@ import {
   IconRuler,
   IconSearch,
   IconSpeaker,
+  IconSplit,
   IconStop,
   IconZoomIn,
   IconZoomOut,
@@ -51,6 +52,8 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
   const setDimLevel = useStore((s) => s.setDimLevel)
   const rulerOn = useStore((s) => s.rulerOn)
   const toggleRuler = useStore((s) => s.toggleRuler)
+  const refOpen = useStore((s) => s.refOpen)
+  const toggleRef = useStore((s) => s.toggleRef)
   const autoScroll = useStore((s) => s.autoScroll)
   const autoScrollSpeed = useStore((s) => s.autoScrollSpeed)
   const toggleAutoScroll = useStore((s) => s.toggleAutoScroll)
@@ -410,6 +413,14 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
             >
               <IconNote />
             </button>
+            <button
+              className={`icon-btn${refOpen ? ' is-active' : ''}`}
+              title={m.toggleRefPane}
+              aria-pressed={refOpen}
+              onClick={toggleRef}
+            >
+              <IconSplit />
+            </button>
           </div>
 
           <div className="toolbar__divider" />
@@ -679,6 +690,17 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
                   >
                     <IconNote width={16} height={16} />
                     {m.toggleNotes}
+                  </button>
+                  <button
+                    className={`menu__item${refOpen ? ' is-active' : ''}`}
+                    onClick={() => {
+                      toggleRef()
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <IconSplit width={16} height={16} />
+                    {m.refPane}
+                    {refOpen ? ' ✓' : ''}
                   </button>
 
                   <div className="menu__sep" />

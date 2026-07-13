@@ -89,6 +89,8 @@ export const MESSAGES = {
     penWidthLabel: 'Nét bút',
     textSizeLabel: 'Cỡ chữ',
     exitAnnotate: 'Xong',
+    refPane: 'Trang tham chiếu',
+    toggleRefPane: 'Mở trang tham chiếu (dò đáp án)',
 
     // Selection toolbar
     highlight: 'Tô màu',
@@ -224,6 +226,8 @@ export const MESSAGES = {
     penWidthLabel: 'Pen width',
     textSizeLabel: 'Text size',
     exitAnnotate: 'Done',
+    refPane: 'Reference page',
+    toggleRefPane: 'Open reference page (check answers)',
 
     highlight: 'Highlight',
     addNote: 'Add note',

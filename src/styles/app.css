@@ -593,6 +593,75 @@ textarea {
   padding: 10px 12px;
 }
 
+/* --- Reference pane (peek at another page) -------------------------------- */
+.ref-pane {
+  width: min(42vw, 480px);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+  z-index: 20;
+}
+.ref-pane__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.ref-pane__title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ref-pane__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.ref-pane__body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: var(--bg);
+}
+/* Themed backdrop so mix-blend (editor-dark) themes composite the page right. */
+.ref-pane .react-pdf__Page {
+  background: var(--page-bg) !important;
+  box-shadow: var(--canvas-shadow);
+}
+.ref-pane__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+.ref-pane__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 29;
+}
+@media (max-width: 760px) {
+  .ref-pane {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(92vw, 480px);
+    z-index: 30;
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.4);
+  }
+}
+
 .empty-hint {
   color: var(--fg-muted);
   text-align: center;

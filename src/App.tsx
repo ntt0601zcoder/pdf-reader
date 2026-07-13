@@ -6,6 +6,7 @@ import { Toolbar } from './components/Toolbar'
 import { Welcome } from './components/Welcome'
 import { Sidebar } from './components/Sidebar/Sidebar'
 import { PdfViewer } from './components/Viewer/PdfViewer'
+import { ReferencePane } from './components/ReferencePane'
 import { BackNavButton } from './components/BackNavButton'
 import { IconClose } from './components/icons'
 
@@ -26,6 +27,7 @@ export default function App() {
           <Toolbar tts={tts} />
           <div className="app__body">
             <PdfViewer />
+            <ReferencePane />
             <Sidebar />
           </div>
           <BackNavButton />
