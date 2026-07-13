@@ -467,6 +467,12 @@ export const useStore = create<ReaderState>()(
         penColor: s.penColor,
         penWidth: s.penWidth,
         textSize: s.textSize,
+        // Reuse the short-lived (~1h) Drive token across reloads so reopening a
+        // book doesn't re-prompt. Scope is drive.file only; a stale/revoked one
+        // self-heals via the 401 → interactive retry in authedFetch.
+        accessToken: s.accessToken,
+        tokenExpiresAt: s.tokenExpiresAt,
+        userEmail: s.userEmail,
       }),
     },
   ),

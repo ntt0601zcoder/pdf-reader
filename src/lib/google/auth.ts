@@ -60,6 +60,16 @@ export function initGoogleAuth(): Promise<void> {
  * @param interactive force the consent/account popup (must be from a user gesture).
  */
 export function getAccessToken(interactive = false): Promise<string> {
+  // On a fresh page load the module token is empty — adopt the one persisted in
+  // the store (rehydrated from localStorage) so a still-valid token is reused
+  // without re-prompting.
+  if (!accessToken) {
+    const s = useStore.getState()
+    if (s.accessToken && s.tokenExpiresAt) {
+      accessToken = s.accessToken
+      tokenExpiresAt = s.tokenExpiresAt
+    }
+  }
   // Reuse a still-valid token (60s safety margin) unless forced interactive.
   if (!interactive && accessToken && Date.now() < tokenExpiresAt - 60_000) {
     return Promise.resolve(accessToken)
