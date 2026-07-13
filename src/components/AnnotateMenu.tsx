@@ -74,9 +74,9 @@ export function AnnotateMenu() {
           <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setOpen(false)} />
           <div className="menu__panel menu__panel--wide">
             <div className="menu__row">
-              {toolBtn('ink', <IconPen />, m.penTool)}
-              {toolBtn('text', <IconTextBox />, m.textTool)}
-              {toolBtn('eraser', <IconEraser />, m.eraserTool)}
+              {toolBtn('ink', <IconPen />, `${m.penTool} · P`)}
+              {toolBtn('text', <IconTextBox />, `${m.textTool} · T`)}
+              {toolBtn('eraser', <IconEraser />, `${m.eraserTool} · E`)}
               <button className="icon-btn" title={m.undo} onClick={() => undoAnnot()}>
                 <IconUndo />
               </button>

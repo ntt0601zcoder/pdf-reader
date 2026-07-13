@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { useTheme } from './hooks/useTheme'
+import { useShortcuts } from './hooks/useShortcuts'
 import { useMessages } from './hooks/useMessages'
 import { useTextToSpeech } from './hooks/useTextToSpeech'
 import { useStore } from './store/useStore'
@@ -22,29 +22,8 @@ export default function App() {
   // Read-aloud engine lives here so the (sibling) toolbar can drive it.
   const tts = useTextToSpeech()
 
-  // Cmd/Ctrl+X jumps straight to search. Skipped in editable fields so Cut still
-  // works there (and it's a no-op over the readonly document anyway).
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey) || e.code !== 'KeyX') return
-      const t = e.target as HTMLElement | null
-      if (
-        t &&
-        (t.tagName === 'INPUT' ||
-          t.tagName === 'TEXTAREA' ||
-          t.tagName === 'SELECT' ||
-          t.isContentEditable)
-      ) {
-        return
-      }
-      if (!useStore.getState().doc) return
-      e.preventDefault()
-      useStore.getState().setPanel('search')
-      setTimeout(() => document.querySelector<HTMLInputElement>('.search-box input')?.focus(), 60)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  // Global single-key shortcuts (/ search, d translate, n note, p/t/e tools, Esc).
+  useShortcuts()
 
   return (
     <div className="app">

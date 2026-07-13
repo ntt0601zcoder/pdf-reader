@@ -395,7 +395,7 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
             </button>
             <button
               className={`icon-btn${panel === 'search' ? ' is-active' : ''}`}
-              title={m.toggleSearch}
+              title={`${m.toggleSearch} · /`}
               onClick={() => togglePanel('search')}
             >
               <IconSearch />
@@ -416,7 +416,7 @@ export function Toolbar({ tts }: { tts: TtsApi }) {
             </button>
             <button
               className={`icon-btn${panel === 'translate' ? ' is-active' : ''}`}
-              title={m.translate}
+              title={`${m.translate} · D`}
               onClick={() => togglePanel('translate')}
             >
               <IconTranslate />
