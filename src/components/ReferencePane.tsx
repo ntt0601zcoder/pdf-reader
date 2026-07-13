@@ -4,7 +4,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { useStore } from '../store/useStore'
 import { useMessages } from '../hooks/useMessages'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { IconChevronLeft, IconChevronRight, IconClose } from './icons'
+import { IconChevronLeft, IconChevronRight, IconClose, IconZoomIn, IconZoomOut } from './icons'
 
 /**
  * A secondary "peek" pane: a continuous, scrollable view of the document beside
@@ -22,10 +22,13 @@ export function ReferencePane() {
   const m = useMessages()
   const narrow = useMediaQuery('(max-width: 760px)')
   const bodyRef = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(0)
+  const [width, setWidth] = useState(0) // fit-to-pane width
+  const [scale, setScale] = useState(1) // zoom multiplier over fit-width
   const [aspect, setAspect] = useState(1.414) // height / width, refined from page 1
   const [topPage, setTopPage] = useState(refPage)
   const [draft, setDraft] = useState(String(refPage))
+  const pageWidth = Math.round(width * scale)
+  const zoom = (d: number) => setScale((s) => Math.min(4, Math.max(0.5, Math.round((s + d) * 10) / 10)))
 
   useEffect(() => setDraft(String(topPage)), [topPage])
 
@@ -142,6 +145,14 @@ export function ReferencePane() {
               <IconChevronRight width={16} height={16} />
             </button>
           </div>
+          <div className="ref-pane__zoom">
+            <button className="icon-btn" onClick={() => zoom(-0.2)} title={m.zoomOut}>
+              <IconZoomOut width={16} height={16} />
+            </button>
+            <button className="icon-btn" onClick={() => zoom(0.2)} title={m.zoomIn}>
+              <IconZoomIn width={16} height={16} />
+            </button>
+          </div>
           <button className="icon-btn" onClick={closeRef} aria-label={m.closeDoc}>
             <IconClose width={16} height={16} />
           </button>
@@ -154,8 +165,8 @@ export function ReferencePane() {
                 key={i + 1}
                 pdf={pdfDoc}
                 pageNumber={i + 1}
-                width={width}
-                height={width * aspect}
+                width={pageWidth}
+                height={pageWidth * aspect}
               />
             ))}
         </div>

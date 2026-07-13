@@ -665,12 +665,19 @@ textarea {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
 }
 .ref-pane__nav {
   display: flex;
   align-items: center;
   gap: 4px;
   margin-left: auto;
+}
+.ref-pane__zoom {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 /* Continuous scroll of pages (block container, not flex, so tall content
    scrolls vertically). */
