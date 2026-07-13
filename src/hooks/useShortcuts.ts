@@ -18,7 +18,36 @@ function focusLater(selector: string) {
 export function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // Never intercept while typing in an editable control.
+      // Ignore key-repeat and in-progress IME composition (so Esc still cancels
+      // a Vietnamese/CJK composition rather than closing a panel).
+      if (e.repeat || e.isComposing) return
+
+      const s = useStore.getState()
+
+      // Escape unwinds whatever is active — handled even from a focused field so
+      // you can close what a shortcut just opened.
+      if (e.key === 'Escape') {
+        const ae = document.activeElement as HTMLElement | null
+        if (ae && ae.classList.contains('annotate-text')) {
+          ae.blur() // commit the annotate text box being edited
+        } else if (s.editingNoteId) {
+          // Cancel a note edit; discard it if left empty (e.g. from `n`).
+          const note = s.notes.find((n) => n.id === s.editingNoteId)
+          if (note && !note.text.trim()) s.removeNote(s.editingNoteId)
+          s.setEditingNoteId(null)
+          ae?.blur?.()
+        } else if (s.tool !== 'none') s.setTool('none')
+        else if (s.pendingSelection) s.setPendingSelection(null)
+        else if (s.panel) {
+          s.setPanel(null)
+          ae?.blur?.()
+        } else if (s.refOpen) s.closeRef()
+        else return
+        e.preventDefault()
+        return
+      }
+
+      // The letter/slash shortcuts must never fire while typing in a field.
       const el = e.target as HTMLElement | null
       if (
         el &&
@@ -27,19 +56,6 @@ export function useShortcuts() {
           el.tagName === 'SELECT' ||
           el.isContentEditable)
       ) {
-        return
-      }
-
-      const s = useStore.getState()
-
-      // Escape: unwind whatever is active (tool → selection → panel → ref pane).
-      if (e.key === 'Escape') {
-        if (s.tool !== 'none') s.setTool('none')
-        else if (s.pendingSelection) s.setPendingSelection(null)
-        else if (s.panel) s.setPanel(null)
-        else if (s.refOpen) s.closeRef()
-        else return
-        e.preventDefault()
         return
       }
 
